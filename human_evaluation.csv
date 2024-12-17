@@ -1,0 +1,746 @@
+Question No.,Category ,Question Source,Datasets,Question Set , SQLite,PostgreSQL,Gold PostgreSQL Result,Zero-shot SQL Gen,Zero-shot SQL Gen,Generated Assumptions,Chosen Options,Final Augmented SQL,Augmented SQL Results,Verdict
+1,,DAAI - Matt,art ,How many colleagues have completed ART for 'Q3 2024 - ART'?,SELECT COUNT (DISTINCT resource_id) FROM art WHERE final_art_status LIKE 'Completed%' AND compliance_program LIKE '%Q3 2024 - ART%',SELECT COUNT(DISTINCT resource_id) FROM art WHERE final_art_status LIKE 'Completed%' AND compliance_program LIKE '%Q3 2024 - ART%';,[{'count': 10228}],SELECT COUNT(DISTINCT resource_id) FROM art WHERE compliance_program = 'Q3 2024 - ART' AND final_art_status = 'Completed';,,"Assumptions:
+  - Assuming 'ART' refers to the 'Annual Risk Training' based on the provided context. However, it's essential to confirm this assumption with the user.
+  - The question asks for the count of 'colleagues' who completed ART, assuming that each record in the 'art' table represents a unique colleague. However, the 'resource_id' in the 'art' table has duplicates. 
+
+Ambiguities:
+  - The user's question doesn't specify whether they are interested in colleagues who have completed the entire 'Q3 2024 - ART' program or just individual courses within that program.
+
+Edge Cases:
+  - The 'art' table contains inconsistencies in 'compliance_program', 'course_completion_date', 'course_completion_status', and 'final_art_status'.","Filtered Choices:
+- Could you please confirm that 'ART' in your query stands for 'Annual Risk Training'? - yes
+- Are you interested in the number of unique colleagues who completed the 'Q3 2024 - ART' training or the total number of completion records, even if a colleague completed it multiple times? - unique colleagues
+- Assume the user is interested in colleagues who have completed the entire program.
+- Filter for 'compliance_program' = 'Q3 2024 - ART' and 'final_art_status' = 'Completed' to capture colleagues who have completed the program as intended. ",SELECT COUNT(DISTINCT resource_id) FROM art WHERE compliance_program LIKE 'Q3 2024 - ART' AND final_art_status LIKE 'Completed';,[{'count': 10228}],
+2,,DAAI - Matt,art,How many colleagues have the course tiltled 'Conduct Rules' ?,SELECT COUNT (*) FROM art WHERE course_name LIKE '%Conduct Rules%',SELECT COUNT(*) FROM art WHERE course_name LIKE '%Conduct Rules%';,[{'count': 28162}],SELECT COUNT(DISTINCT resource_id) FROM art WHERE course_name ILIKE 'Conduct Rules';,"      count
+0  28162","Assumptions:
+  - Assuming 'course titled ""Conduct Rules""' refers to a course name within the 'art' table's 'course_name' column. 
+  - Assuming ""colleagues"" refers to distinct individuals identified by the 'resource_id' in the 'art' table, even though this column contains duplicates.
+
+Ambiguities:
+  - The question doesn't specify whether to consider only colleagues who have completed the 'Conduct Rules' course or include those who have registered but not completed.
+
+Edge Cases:
+  - The 'art' table has a column 'compliance_program'. Should this be factored into identifying the 'Conduct Rules' course?
+  - Data quality issues are noted in the 'art' table, such as 'course_completion_date' being later than 'art_due_date'.","Filtered Choices:
+- Proceed with querying the 'course_name' column in the 'art' table.
+- Use COUNT(DISTINCT resource_id) to count unique colleagues.
+- [""Should we include colleagues with 'optional' status for the 'Conduct Rules' course in the count?""] - yes
+- Assume 'Conduct Rules' is a unique course name and doesn't require filtering by 'compliance_program'.",SELECT COUNT(DISTINCT resource_id) FROM art WHERE (course_name ILIKE '%Conduct Rules%') OR (course_completion_status = 'optional');,[{'count': 28163}],
+3,,DAAI - Matt,holiday_details,How many hours did Jesse Weber 00549109 entered on the 09/06/2024?,SELECT SUM(hours) FROM holiday_details WHERE colleague_id = '00549109' and entered_on = '2024-06-09' ,SELECT SUM(hours) FROM holiday_details WHERE colleague_id = '00549109' AND entered_on = '2024-06-09';,[{'sum': 63.0}],SELECT SUM(hours) FROM holiday_details WHERE colleague_id ILIKE '00549109' AND entered_on ILIKE '2024-06-09';,SQL Error 500,,,,,Failed because used ILIKE on date
+4,,DAAI - Linda,"people, holiday_balance","List the names of people in my team (Brian Aguilar'), the hours they have carried forward, and the working hours of those who have carried forward more hours than their weekly working hours?","SELECT full_name, carried_forward ,scheduled_working_hours FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE carried_forward > scheduled_working_hours AND direct_line_manager_name = 'Brian Aguilar';","SELECT full_name, carried_forward, scheduled_working_hours FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE carried_forward > scheduled_working_hours AND direct_line_manager_name = 'Brian Aguilar';","[{'full_name': 'Julia Anderson', 'carried_forward': 35.0, 'scheduled_working_hours': 30.0}, {'full_name': 'Mark Holden', 'carried_forward': 35.0, 'scheduled_working_hours': 33.0}, {'full_name': 'Amy Turner', 'carried_forward': 32.0, 'scheduled_working_hours': 21.0}]","SELECT p.full_name, hb.carried_forward, p.scheduled_working_hours FROM people p JOIN holiday_balance hb ON p.resource_id = hb.colleague_id WHERE p.direct_line_manager_name ILIKE 'Brian Aguilar' AND hb.carried_forward > p.scheduled_working_hours;","        full_name  carried_forward  scheduled_working_hours
+0  Julia Anderson             35.0                     30.0
+1     Mark Holden             35.0                     33.0
+2      Amy Turner             32.0                     21.0","Assumptions:
+  - Assuming 'carried forward' hours refer to the 'carried_forward' column in the 'holiday_balance' table.
+  - Assuming ""working hours"" refer to the ""scheduled_working_hours"" column in the 'people' table.
+  - Assuming the request is for the current year's data and the 'holiday_balance' table has the most up-to-date information.
+
+Ambiguities:
+  - The term ""team"" is ambiguous. It is unclear how ""team"" is defined within the database.
+
+Edge Cases:
+  - The 'people' table may contain multiple entries for the same person if they have had multiple roles or assignments.
+  - The 'holiday_balance' table may have missing entries for some employees.","Filtered Choices:
+- Use 'carried_forward' column from 'holiday_balance' table.
+- Use 'scheduled_working_hours' column from 'people' table.
+- Use data from 'holiday_balance' table with the latest 'report_date'.
+- Could you please confirm if 'team' means everyone reporting to the same manager (Brian Aguilar')? - yes
+- Exclude records with NULL values in these columns.","SELECT p.full_name, hb.carried_forward, p.scheduled_working_hours FROM people p JOIN holiday_balance hb ON p.resource_id = hb.colleague_id WHERE p.direct_line_manager_name ILIKE '%Brian Aguilar%' AND hb.carried_forward > p.scheduled_working_hours AND p.scheduled_working_hours IS NOT NULL;","        full_name  carried_forward  scheduled_working_hours
+0  Julia Anderson             35.0                     30.0
+1     Mark Holden             35.0                     33.0
+2      Amy Turner             32.0                     21.0",
+5,,DAAI - Matt,people,How many colleagues work Onshore vs Offshore? ,"SELECT COUNT (DISTINCT resource_id), is_onshore FROM people WHERE is_onshore IS NOT NULL GROUP BY 2 ","SELECT COUNT(DISTINCT resource_id), is_onshore FROM people WHERE is_onshore IS NOT NULL GROUP BY is_onshore;","[{'count': 10593, 'is_onshore': 'Offshore'}, {'count': 20709, 'is_onshore': 'Onshore'}]","SELECT is_onshore, COUNT(*) FROM people GROUP BY is_onshore;","0       None    229
+1   Offshore  10593
+2    Onshore  20709","Assumptions:
+  - Assuming ""colleagues"" refers to all records in the ""people"" table, regardless of their employment type (permanent, contractor, etc.).
+  - Assuming ""Onshore vs Offshore"" categorization should be based on the ""is_onshore"" column in the ""people"" table.
+
+Ambiguities:
+  - The question doesn't specify if we should consider only active colleagues or include those who have left (indicated by the ""leave_date"" column).
+
+Edge Cases:
+  - The ""is_onshore"" column might contain NULL values, leading to an inaccurate count.","Filtered Choices:
+- Proceed with the assumption that ""colleagues"" refers to all records in the ""people"" table.
+- Proceed with using the ""is_onshore"" column for categorization.
+- Count all colleagues, including those who have left.
+- Treat NULL values as a separate category (e.g., ""Unknown"").","SELECT COALESCE(is_onshore, 'Unknown') AS location_status, COUNT(*) FROM people GROUP BY location_status;","Augmented SQL Generation Results:
+  location_status  count
+0         Unknown    229
+1        Offshore  10593
+2         Onshore  20709",
+6,,DAAI - Matt,"people, art",What is the ART completione rate for London and Bristol for the 'Q3 2024 - ART ' compliance program? Round percentage to 2 decimal points,"SELECT A.City ,ROUND(SUM(CASE WHEN B.final_art_status LIKE 'Completed%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),2) AS completion_rate_percentage FROM people AS A JOIN art AS B ON A.resource_id = B.resource_id WHERE B.compliance_program LIKE '%Q3 2024 - ART%' AND A.city IN ('Bristol', 'London') GROUP BY 1","SELECT A.City, ROUND(SUM(CASE WHEN B.final_art_status LIKE 'Completed%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS completion_rate_percentage FROM people AS A JOIN art AS B ON A.resource_id = B.resource_id WHERE B.compliance_program LIKE '%Q3 2024 - ART%' AND A.city IN ('Bristol', 'London') GROUP BY A.City;","[{'city': 'Bristol', 'completion_rate_percentage': 36.26}, {'city': 'London', 'completion_rate_percentage': 35.91}]","SELECT ROUND((SUM(CASE WHEN course_completion_status = 'completed' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)), 2) AS completion_rate FROM art WHERE compliance_program ILIKE 'Q3 2024 - ART' AND location_name IN ('London', 'Bristol');",SQL Error 500,,,,,
+7,,DAAI - Chloe ,people,How many colleagues work in each job family in my division Sourcing & Vendor Management?,"SELECT COUNT(DISTINCT resource_id),job_family FROM people WHERE division LIKE '%Sourcing & Vendor Management%' GROUP BY job_family","SELECT COUNT(DISTINCT resource_id), job_family FROM people WHERE division LIKE '%Sourcing & Vendor Management%' GROUP BY job_family;","[{'count': 1, 'job_family': 'Analysis & Insight'}, {'count': 2, 'job_family': 'Business Analysis'}, {'count': 5, 'job_family': 'Business Support Functions'}, {'count': 2, 'job_family': 'Communications'}, {'count': 1, 'job_family': 'Data Science'}, {'count': 8, 'job_family': 'Delivery Project Management'}, {'count': 7, 'job_family': 'Executive Support'}, {'count': 6, 'job_family': 'Risk & Control'}, {'count': 314, 'job_family': 'Sourcing'}, {'count': 66, 'job_family': 'Supplier Management'}, {'count': 1, 'job_family': 'Technology'}, {'count': 1, 'job_family': 'Technology Service Support'}]","SELECT job_family, COUNT(*) AS num_colleagues FROM people WHERE division ILIKE 'Sourcing & Vendor Management' GROUP BY job_family;","                     job_family  num_colleagues
+0            Analysis & Insight               1
+1             Business Analysis               2
+2    Business Support Functions               5
+3                Communications               2
+4                  Data Science               1
+5   Delivery Project Management               8
+6             Executive Support               7
+7                Risk & Control               6
+8                      Sourcing             314
+9           Supplier Management              66
+10                   Technology               1
+11   Technology Service Support               1","Assumptions:
+  - Assuming ""colleagues"" refers to all records in the ""people"" table, regardless of their employment status (e.g., permanent, contractor).
+  - Assuming ""my division"" refers to the division the user belongs to, but the user's information is not available in the provided context.
+
+Ambiguities:
+  - The term ""Sourcing & Vendor Management"" appears to refer to a specific division. However, there might be ambiguities in how divisions are named and stored in the database (e.g., abbreviations, inconsistencies).
+
+Edge Cases:
+  - The ""job_family"" column might contain NULL values for some colleagues, which could lead to an underrepresentation of certain job families in the count.","Filtered Choices:
+- Proceed with the assumption that ""colleagues"" includes all worker types.
+- Assuming ""my division"" refers to the division the user belongs to, but the user's information is not available in the provided context.: division already given
+- Include NULL values as a separate category in the result set, indicating colleagues without a defined job family.","ELECT COALESCE(job_family, 'Undefined') AS job_family, COUNT(*) AS num_colleagues FROM people WHERE division LIKE 'Sourcing & Vendor Management' GROUP BY job_family;","                     job_family  num_colleagues
+0            Analysis & Insight               1
+1             Business Analysis               2
+2    Business Support Functions               5
+3                Communications               2
+4                  Data Science               1
+5   Delivery Project Management               8
+6             Executive Support               7
+7                Risk & Control               6
+8                      Sourcing             314
+9           Supplier Management              66
+10                   Technology               1
+11   Technology Service Support               1",
+8,,DAAI - Chloe ,"peopl, holiday_details ",I am doing an away day in� October 2024 and� I want all my team to be there. Which days are my colleagues on holiday in October for colleagues managed by Shawn Horn?,"SELECT DISTINCT(DATE) FROM  holiday_details JOIN people ON people.resource_id = holiday_details.colleague_id WHERE date BETWEEN '2024-10-01' AND '2024-10-31' AND direct_line_manager_name = 'Shawn Horn' GROUP BY resource_id, DATE  HAVING SUM(hours) >0;","SELECT DISTINCT DATE FROM holiday_details JOIN people ON people.resource_id = holiday_details.colleague_id WHERE DATE BETWEEN '2024-10-01' AND '2024-10-31' AND direct_line_manager_name = 'Shawn Horn' GROUP BY resource_id, DATE HAVING SUM(hours) > 0;","[{'date': '2024-10-14'}, {'date': '2024-10-15'}, {'date': '2024-10-16'}, {'date': '2024-10-17'}, {'date': '2024-10-18'}, {'date': '2024-10-28'}, {'date': '2024-10-29'}, {'date': '2024-10-30'}, {'date': '2024-10-31'}]",SELECT DISTINCT date FROM holiday_details JOIN people ON people.resource_id = holiday_details.colleague_id WHERE date BETWEEN '2024-10-01' AND '2024-10-31' AND direct_line_manager_name ILIKE 'Shawn Horn' AND hours > 0;,"0   2024-10-04
+1   2024-10-11
+2   2024-10-14
+3   2024-10-15
+4   2024-10-16
+5   2024-10-17
+6   2024-10-18
+7   2024-10-28
+8   2024-10-29
+9   2024-10-30
+10  2024-10-31","Assumptions:
+  - Assuming that the user is looking for dates within October 2024 where colleagues, who report to Shawn Horn, have booked at least one hour of holiday.
+  - Assuming the `hours` column in `holiday_details` represents the duration of holiday booked on that particular `date`.
+  - Assuming the user understands that the query, as written, will return one row per resource_id per date where the conditions are met. 
+
+Ambiguities:
+  - The query does not account for potential duplicates in the `people` table. 
+
+Edge Cases:
+  - The query uses an inner join, which might exclude colleagues who have no holiday booked in the `holiday_details` table.
+  - The query filters for `direct_line_manager_name = 'Shawn Horn'`. It's essential to verify if this name is unique.","Filtered Choices:- Proceed with the assumption.
+- Proceed with the assumption.
+- Proceed with the assumption.
+- The `people` table might contain duplicate entries. How would you like to handle these duplicates in the query? - ignore them
+- The current query only considers colleagues with entries in the `holiday_details` table. Would you like to include colleagues who have not booked any holidays? - do not
+- Are there multiple managers named 'Shawn Horn'? If yes, is there any other identifier, like employee ID, that we can use to specify the correct manager? - no there are not",SELECT DISTINCT date FROM holiday_details JOIN people ON people.resource_id = holiday_details.colleague_id WHERE date BETWEEN '2024-10-01' AND '2024-10-31' AND direct_line_manager_name LIKE '%Shawn Horn%' AND hours > 0;,"0   2024-10-04
+1   2024-10-11
+2   2024-10-14
+3   2024-10-15
+4   2024-10-16
+5   2024-10-17
+6   2024-10-18
+7   2024-10-28
+8   2024-10-29
+9   2024-10-30
+10  2024-10-31",
+9,,DAAI - Chloe ,people,"How many of each grade are in my team, direct line manager Mary Brooks?","SELECT grade, COUNT(grade) FROM people WHERE direct_line_manager_id = '00000479' GROUP BY grade","SELECT grade, COUNT(grade) FROM people WHERE direct_line_manager_id = '00000479' GROUP BY grade;","[{'grade': 'C', 'count': 2}, {'grade': 'D', 'count': 7}, {'grade': 'E', 'count': 21}, {'grade': 'F', 'count': 4}, {'grade': 'U', 'count': 2}]","SELECT grade, COUNT(*) FROM people WHERE direct_line_manager_name ILIKE 'Mary Brooks' GROUP BY grade;","  grade  count
+0     C      2
+1     D      7
+2     E     21
+3     F      4
+4     U      2","Assumptions:
+  - Assuming ""team"" refers to all individuals who report directly to Mary Brooks.
+  - Assuming the user is interested in the current grade of their team members.
+
+Ambiguities:
+  - The term ""team"" is ambiguous. It could refer to:
+
+Edge Cases:
+  - Handling potential NULL values in the ""grade"" column.
+  - There might be multiple employees with the same name ""Mary Brooks"".","Filtered Choices:
+- Use ""direct_line_manager_name"" to filter for Mary Brooks' direct reports.
+- Query the ""grade"" column from the ""people"" table.
+- Direct reports only
+- Exclude individuals with NULL grades from the count.
+- Assume the user is referring to their own direct line manager and use additional identifiers like employee ID or email if available to ensure the correct ""Mary Brooks"" is selected.","SELECT grade, COUNT(*) FROM people WHERE direct_line_manager_name ILIKE 'Mary Brooks' AND grade IS NOT NULL GROUP BY grade; -- Ideally, use a unique manager identifier (e.g., direct_line_manager_id or line_manager_email) if available","  grade  count
+0     C      2
+1     D      7
+2     E     21
+3     F      4
+4     U      2",
+10,,DAAI - Chloe ,people,Im preparing a training session for product owners. Could you tell me which are the top 3 hubs where most of them are stationed? Ignore non hub,"SELECT hub_location, COUNT(*) AS hub_count FROM people WHERE job_title LIKE '%product owner%' AND hub_location <> 'non hub' GROUP BY hub_location ORDER BY hub_count DESC LIMIT 3;","SELECT hub_location, COUNT(*) AS hub_count FROM people WHERE job_title LIKE '%product owner%' AND hub_location <> 'non hub' GROUP BY hub_location ORDER BY hub_count DESC LIMIT 3;",[],SELECT hub_location FROM people WHERE job_title ILIKE '%Product Owner%' AND hub_location IS NOT NULL GROUP BY hub_location ORDER BY count(*) DESC LIMIT 3;,"0      non hub
+1       London
+2    Edinburgh","Assumptions:
+  - Assuming ""Product Owner"" is a role captured within the 'job_title' or 'business_title' fields in the 'people' table. 
+  - Assuming ""hub"" refers to the 'hub_location' field in the 'people' table.
+  - Assuming ""most of them are stationed"" implies finding hubs with the highest count of Product Owners.
+  - Assuming 'Ignore non hub' means excluding records where the 'hub_location' field is NULL or empty.
+
+Ambiguities:
+  - The user's question does not specify if they are looking for the top 3 hubs globally or within a specific context (e.g., department, country).
+
+Edge Cases:
+  - There might be ties in the count of Product Owners across different hubs.
+  - There might not be enough data to determine the top 3 hubs, especially if there are many hubs with very few Product Owners.","Filtered Choices:
+- Proceed with querying 'job_title' and 'business_title' columns for ""Product Owner"".
+- Proceed using the 'hub_location' field to determine the top hubs.
+- Rank hubs based on the count of Product Owners.
+- Assume a global context and return the top 3 hubs overall.
+- Return all hubs with tied counts even if it results in more than 3 hubs.
+- Return the top N hubs where N is the maximum number of hubs available after applying the criteria, even if N is less than 3.","Filtered Choices:
+- Proceed with querying 'job_title' and 'business_title' columns for ""Product Owner"".
+- Proceed using the 'hub_location' field to determine the top hubs.
+- Rank hubs based on the count of Product Owners.
+- Assume a global context and return the top 3 hubs overall.
+- Return all hubs with tied counts even if it results in more than 3 hubs.
+- Return the top N hubs where N is the maximum number of hubs available after applying the criteria, even if N is less than 3.","     hub_location
+0         non hub
+1          London
+2       Edinburgh
+3  West Yorkshire
+4         Bristol
+5      Manchester
+6      Birmingham
+7         Glasgow
+8         Chester
+9         Cardiff",
+11,,DAAI - Chloe ,"people, holiday_details","Where are my team based and how many are at each hub, my direct line manager id is 00000479 ?","SELECT hub_location, COUNT(*) FROM people WHERE direct_line_manager_id = '00000479' GROUP BY hub_location;","SELECT hub_location, COUNT(*) FROM people WHERE direct_line_manager_id = '00000479' GROUP BY hub_location;","[{'hub_location': 'Birmingham', 'count': 1}, {'hub_location': 'Bristol', 'count': 2}, {'hub_location': 'Cardiff', 'count': 1}, {'hub_location': 'Edinburgh', 'count': 5}, {'hub_location': 'Glasgow', 'count': 1}, {'hub_location': 'London', 'count': 7}, {'hub_location': 'non hub', 'count': 14}, {'hub_location': 'West Yorkshire', 'count': 5}]","SELECT hub_location, COUNT(*) FROM people WHERE direct_line_manager_id = '00000479' GROUP BY hub_location;","    hub_location  count
+0      Birmingham      1
+1         Bristol      2
+2         Cardiff      1
+3       Edinburgh      5
+4         Glasgow      1
+5          London      7
+6         non hub     14
+7  West Yorkshire      5","Assumptions:
+  - Assuming ""my team"" refers to all individuals who report up to the user's direct line manager (ID: 00000479).
+  - The user is seeking the count of team members based on their primary work location's regional hub ('hub_location').
+
+Ambiguities:
+  - The term ""based"" could refer to a colleague's primary work location ('location_name', 'hub_location', 'city') or their 'onshore/offshore' status.
+
+Edge Cases:
+  - The 'people' table may contain duplicate entries for the same individual, potentially leading to an inaccurate count.
+  - The 'hub_location' field may contain NULL values, leading to an incomplete count of team members.","Filtered Choices:
+- Proceed with the assumption that ""my team"" encompasses all individuals directly reporting to the manager with ID '00000479'.
+- Proceed with the query assuming the user is interested in the count of team members per 'hub_location'.
+- Utilize the DISTINCT keyword to ensure each team member is counted only once, regardless of potential duplicates in the 'people' table.","SELECT DISTINCT hub_location, COUNT(*) FROM people WHERE direct_line_manager_id LIKE '00000479' GROUP BY hub_location;","     hub_location  count
+0      Birmingham      1
+1         Bristol      2
+2         Cardiff      1
+3       Edinburgh      5
+4         Glasgow      1
+5          London      7
+6         non hub     14
+7  West Yorkshire      5",
+12,,DAAI - Linda,"people, holiday_balance",How many hours has been carried forward in my team (Tim Kent)?,SELECT SUM(carried_forward) FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE direct_line_manager_name = 'Tim Kent';,SELECT SUM(carried_forward) FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE direct_line_manager_name = 'Tim Kent';,[{'sum': 387.9}],SELECT SUM(carried_forward) FROM holiday_balance WHERE colleague_id IN (SELECT resource_id FROM people WHERE direct_line_manager_name ILIKE 'Tim Kent%');,387.9,"Assumptions:
+  - Assuming ""my team"" refers to individuals who share the same direct line manager as Tim Kent.
+  - Assuming the user is interested in the carried forward hours from the latest holiday balance report date (2024-07-22) as per the 'holiday_balance' table.
+
+Ambiguities:
+  - The term ""my team"" is ambiguous. It could refer to different team structures depending on the organizational context.
+
+Edge Cases:
+  - There might be multiple colleagues named 'Tim Kent' in the database.
+  - Tim Kent or members of his team might not be present in the 'holiday_balance' table for the specified report date.","Filtered Choices:
+- Proceed with the assumption that ""my team"" refers to the team Tim Kent directly manages.
+- Use the latest available 'report_date' from the 'holiday_balance' table.",SELECT SUM(carried_forward) FROM holiday_balance WHERE report_date = (SELECT MAX(report_date) FROM holiday_balance) AND colleague_id IN (SELECT resource_id FROM people WHERE direct_line_manager_name ILIKE '%Tim Kent%');,[{'sum': 387.9}],
+13,,DAAI - Linda,"people, holiday_details","There has been a workday upgrade on job families, can I check if anyone whoa has data science or data scientist in their job title and  the job family is not Data Science? Give me their id, job title and job family","SELECT resource_id, job_family, job_title  from people WHERE job_title LIKE '%Data Scien%' AND job_family <> 'Data Science';","SELECT resource_id, job_family, job_title FROM people WHERE job_title LIKE '%Data Scien%' AND job_family <> 'Data Science';","[{'resource_id': '00772388', 'job_family': 'Data & Analytics Strategy', 'job_title': 'Data Science Manager'}]","SELECT resource_id, job_title, job_family FROM people WHERE (job_title ILIKE '%Data Science%' OR job_title ILIKE '%Data Scientist%') AND job_family NOT ILIKE 'Data Science%';",0    00772388  Data Science Manager  Data & Analytics Strategy,"Assumptions:
+  - Assuming 'Data Science' as a job family is case-insensitive.
+  - Assuming the search for ""data science"" or ""data scientist"" in the job title should be case-insensitive.
+  - Assuming the user is interested in all records that EVER existed with the specified criteria, even if they are no longer active (e.g., employees who have left the company).
+
+Ambiguities:
+  - Clarify the workday upgrade's impact. Did it modify existing job families or introduce new ones?
+  - The user requests individuals with 'data science' OR 'data scientist' in their job title. Should this be interpreted as an exact match, or as a partial match?
+
+Edge Cases:
+  - Handle potential NULL values in the `job_family` column.
+  - Handle potential variations in job titles, like abbreviations or synonyms.","Filtered Choices:
+- Use a case-insensitive string comparison (e.g., `LOWER(job_family) != 'data science'`) to ensure consistency regardless of capitalization.
+- Convert both the job title and search terms to lowercase using `LOWER()` before comparison. This ensures we capture variations in capitalization.
+- No changes needed to the query. Proceed with selecting all records matching the criteria.
+- Interpret as an exact match. Only job titles strictly matching either ""data science"" or ""data scientist"" will be included.
+- Use the SQL `LIKE` operator with wildcards to capture variations like ""Data Sci"" or ""Data Scientist, Senior"" etc.","SELECT resource_id, job_title, job_family FROM people WHERE (LOWER(job_title) LIKE '%data science%' OR LOWER(job_title) LIKE '%data scientist%') AND LOWER(job_family) != 'data science';","[{'resource_id': '00772388', 'job_family': 'Data & Analytics Strategy', 'job_title': 'Data Science Manager'}]",
+14,,DAAI - Linda,"people, ART",What is the % people who are agency staff that have completed all of 'Q2 2024 - ART' program?,SELECT COUNT(CASE WHEN final_art_status LIKE 'Completed%' THEN 1 END) * 100.0 / COUNT(*) AS percentage_completed FROM art JOIN people ON art.resource_id = people.resource_id WHERE compliance_program LIKE '%Q2 2024 - ART%' AND agency IS NOT NULL;,SELECT COUNT(CASE WHEN final_art_status LIKE 'Completed%' THEN 1 END) * 100.0 / COUNT(*) AS percentage_completed FROM art JOIN people ON art.resource_id = people.resource_id WHERE compliance_program LIKE '%Q2 2024 - ART%' AND agency IS NOT NULL;,[{'percentage_completed': 94.8721183621975}],SELECT CAST(COUNT(DISTINCT CASE WHEN final_art_status ILIKE 'Completed' THEN resource_id ELSE NULL END) AS REAL) * 100 / COUNT(DISTINCT resource_id) FROM art WHERE compliance_pSELECT CAST(COUNT(DISTINCT CASE WHEN final_art_status ILIKE 'Completed' THEN resource_id ELSE NULL END) AS REAL) * 100 / COUNT(DISTINCT resource_id) FROM art WHERE compliance_program ILIKE 'Q2 2024 - ART' AND resource_id IN (SELECT resource_id FROM people WHERE agency IS NOT NULL);rogram ILIKE 'Q2 2024 - ART' AND resource_id IN (SELECT resource_id FROM people WHERE agency IS NOT NULL);,"    ?column?
+0  92.194257","Assumptions:
+  - Assuming 'completed all of ""Q2 2024 - ART"" program' refers to colleagues having a 'Completed' status in the 'final_art_status' column within the 'art' table.
+  - Assuming 'agency staff' refers to colleagues with a non-NULL value in the 'agency' column of the 'people' table.
+
+Ambiguities:
+  - The question doesn't specify whether the percentage should be calculated based on the total number of people in the 'people' table or only those identified as agency staff.
+
+Edge Cases:
+  - There might be colleagues listed in the 'people' table who are identified as agency staff but are not present in the 'art' table, potentially due to data discrepancies or the program not being applicable to them.","Filtered Choices:
+- Proceed with the assumption that 'Completed' status in 'final_art_status' accurately reflects program completion.
+- Proceed with the assumption that non-NULL values in the 'agency' column accurately represent agency staff.
+- Calculate the percentage based only on the number of agency staff in the 'people' table.",ELECT CAST(COUNT(DISTINCT CASE WHEN art.final_art_status ILIKE 'Completed' THEN art.resource_id ELSE NULL END) AS REAL) * 100 / COUNT(DISTINCT p.resource_id) FROM people p JOIN art ON p.resource_id = art.resource_id WHERE p.agency IS NOT NULL AND art.compliance_program ILIKE 'Q2 2024 - ART';,"    ?column?
+0  92.194257",
+15,,DAAI - Linda,people,"Can I have the top 3 divisions with the most colleagues in Software Engineering, along with the number of software engineers and their percentage share of the total Software Engineering population?","WITH total_engineers AS (SELECT COUNT(*) AS total_count FROM people WHERE job_family LIKE '%Software Engineering%') SELECT division ,COUNT(*) AS software_engineer_count ,COUNT(*) * 100.0 / (SELECT total_count FROM total_engineers) AS percentage_share FROM people WHERE job_family LIKE '%Software Engineering%' GROUP BY division ORDER BY software_engineer_count DESC LIMIT 3;","WITH total_engineers AS (SELECT COUNT(*) AS total_count FROM people WHERE job_family LIKE '%Software Engineering%') SELECT division, COUNT(*) AS software_engineer_count, COUNT(*) * 100.0 / (SELECT total_count FROM total_engineers) AS percentage_share FROM people WHERE job_family LIKE '%Software Engineering%' GROUP BY division ORDER BY software_engineer_count DESC LIMIT 3;","[{'division': 'Retail Platforms', 'software_engineer_count': 2174, 'percentage_share': 27.425255456036332}, {'division': 'Platforms 2 Shadow Rep', 'software_engineer_count': 1352, 'percentage_share': 17.055632647912198}, {'division': 'Commercial Platforms', 'software_engineer_count': 1251, 'percentage_share': 15.781506244480887}]","WITH SoftwareEngineers AS ( SELECT division, COUNT(*) AS num_engineers FROM people WHERE job_family ILIKE 'Software Engineering' GROUP BY division ) SELECT se.division, se.num_engineers, (se.num_engineers * 100.0 / (SELECT SUM(num_engineers) FROM SoftwareEngineers)) AS percentage FROM SoftwareEngineers se ORDER BY se.num_engineers DESC LIMIT 3;","                 division  num_engineers  percentage
+0        Retail Platforms           2170   27.838358
+1  Platforms 2 Shadow Rep           1259   16.151379
+2    Commercial Platforms           1250   16.035920","Assumptions:
+  - Assuming 'Software Engineering' refers to a specific job title, job family, or a keyword within those fields. The database schema doesn't explicitly contain a 'Software Engineering' category.
+  - Assuming ""colleagues"" refers to all records in the 'people' table, regardless of their employment type (permanent, contractor, etc.).
+
+Ambiguities:
+  - The term 'top' could be interpreted in multiple ways.
+
+Edge Cases:
+  - Handling ties in the number of software engineers across divisions.
+  - The 'division' column might contain inconsistent or NULL values, potentially impacting the accuracy of division-based counts.","Filtered Choices:
+- What specific job family within the 'job_family' column signifies 'Software Engineering'? - Anything with 'Software Engineering' in the title
+- Proceed with the assumption that ""colleagues"" includes all worker types.
+- Interpret 'top' as the highest number of software engineers.
+- Include all divisions with the same number of software engineers in the top 3.
+- Proceed without handling potential inconsistencies or NULL values in the 'division' column.","WITH SoftwareEngineers AS ( SELECT division, COUNT(*) AS num_engineers FROM people WHERE job_family LIKE '%Software Engineering%' GROUP BY division ), RankedSoftwareEngineers AS ( SELECT se.division, se.num_engineers, RANK() OVER (ORDER BY se.num_engineers DESC) AS rank, (se.num_engineers * 100.0 / (SELECT SUM(num_engineers) FROM SoftwareEngineers)) AS percentage FROM SoftwareEngineers se ) SELECT rse.division, rse.num_engineers, rse.percentage FROM RankedSoftwareEngineers rse WHERE rse.rank <= 3 ORDER BY rse.num_engineers DESC, rse.division;","                 division  num_engineers  percentage
+0        Retail Platforms           2174   27.425255
+1  Platforms 2 Shadow Rep           1352   17.055633
+2    Commercial Platforms           1251   15.781506",
+16,,DAAI - Linda,"people, holiday_details","Christmas� day needs to be booked off, what percentage of staff working in Chief security office division have done this?",SELECT (SELECT COUNT(DISTINCT people.resource_id) FROM people JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE holiday_details.date = '2024-12-25' AND people.division LIKE '%Chief Security Office%') * 100.0 / (SELECT COUNT(*) FROM people WHERE people.division LIKE '%Chief Security Office%') AS percentage_on_christmas;,SELECT (SELECT COUNT(DISTINCT people.resource_id) FROM people JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE holiday_details.date = '2024-12-25' AND people.division LIKE '%Chief Security Office%') * 100.0 / (SELECT COUNT(*) FROM people WHERE people.division LIKE '%Chief Security Office%') AS percentage_on_christmas;,[{'percentage_on_christmas': 14.549180327868852}],SELECT CAST(COUNT(DISTINCT CASE WHEN hd.date = '2024-12-25' THEN hd.colleague_id ELSE NULL END) AS REAL) * 100 / COUNT(DISTINCT p.resource_id) FROM people AS p LEFT JOIN holiday_details AS hd ON p.resource_id = hd.colleague_id WHERE p.division ILIKE 'Chief Security Office';,14.54918,"Assumptions:
+  - Assuming 'Christmas Day' refers to December 25th. 
+  - Assuming we are calculating the percentage based on the total number of staff in the 'Chief Security Office' division, regardless of whether they have booked any holiday.
+  - Assuming we are looking for bookings specifically on Christmas Day (i.e., a single day) and not a longer holiday period that includes Christmas.
+
+Ambiguities:
+  - The specific year for Christmas Day is not mentioned. 
+  - It is not clear what constitutes 'booked off'. Does this refer to any holiday booked that includes Christmas Day, or only those where Christmas Day is the only day booked?
+
+Edge Cases:
+  - The 'holiday_details' table might contain multiple entries for the same colleague on the same date, potentially due to amendments or cancellations.
+  - There might be staff who are new and don't have any holiday booked yet.","1Filtered Choices:
+- Assume Christmas Day refers to December 25th.
+- Calculate the percentage based on all staff in 'Chief Security Office'.
+- Only consider bookings on December 25th.
+- Assume the current year.
+- Consider any holiday booking that includes Christmas Day.
+- Consider only the latest entry for each colleague on Christmas Day based on 'entered_on' timestamp.
+- Include these employees in the total count of staff in the division.","SELECT CAST(COUNT(DISTINCT CASE WHEN hd.date = '2024-12-25' THEN hd.colleague_id ELSE NULL END) AS REAL) * 100 / COUNT(DISTINCT p.resource_id) FROM people AS p LEFT JOIN (SELECT hd.*, ROW_NUMBER() OVER (PARTITION BY colleague_id ORDER BY entered_on DESC) as rn FROM holiday_details hd WHERE date = '2024-12-25') AS hd ON p.resource_id = hd.colleague_id AND hd.rn = 1 WHERE p.division ILIKE '%Chief Security Office%';",14.54918,
+17,,DAAI - Matt,people,How many times is Daniel Juarez listed in layer_2?   ,SELECT COUNT(*) FROM people WHERE layer_2 ='Daniel Juarez',SELECT COUNT(*) FROM people WHERE layer_2 = 'Daniel Juarez';,[{'count': 24649}],SELECT COUNT(*) FROM people WHERE layer_2 ILIKE 'Daniel Juarez';,[{'count': 24649}],"Assumptions:
+  - Assuming ""listed"" refers to the number of rows where Daniel Juarez's name appears in the 'layer_2' column.
+  - Assuming ""Daniel Juarez"" is a full name and not a partial name.
+
+Ambiguities:
+  - The question does not specify which table contains the 'layer_2' column.
+
+Edge Cases:
+  - The 'layer_2' column might contain multiple instances of ""Daniel Juarez"" within the same column.
+  - The name ""Daniel Juarez"" might appear with inconsistencies in capitalization or spacing.","
+Filtered Choices:
+- Proceed with the assumption that ""listed"" means the number of appearances in the 'layer_2' column.
+- Proceed with the assumption that we are looking for the full name ""Daniel Juarez"".
+- Assume the user is referring to the 'people' table, as it is the only table provided with a 'layer_2' column.
+- Count each instance of ""Daniel Juarez"" within the 'layer_2' column as a separate occurrence.",SELECT COUNT(*) FROM people WHERE layer_2 ILIKE '%Daniel Juarez%';,0  24649,
+18,,DAAI - Matt,people,Which employee has the longest tenure? ,SELECT full_name FROM people WHERE original_tenure_start IS NOT null ORDER BY original_tenure_start ASC LIMIT 1;,SELECT full_name FROM people WHERE original_tenure_start IS NOT NULL ORDER BY original_tenure_start ASC LIMIT 1;,[{'full_name': 'Richard Moody'}],"SELECT full_name FROM people ORDER BY COALESCE(CAST(original_tenure_start AS DATE), CAST('9999-12-31' AS DATE)) ASC LIMIT 1;",[{'full_name': 'Richard Moody'}],"Assumptions:
+  - Assuming 'longest tenure' refers to the employee with the earliest 'original_tenure_start' date.
+  - Assuming we want the longest tenure regardless of whether the employee is currently active or not.
+
+Ambiguities:
+  - The term 'employee' is ambiguous.
+
+Edge Cases:
+  - The 'original_tenure_start' column contains NULL values.
+  - Multiple employees might have the same 'original_tenure_start' date.","Assumptions:
+  - Assuming 'longest tenure' refers to the employee with the earliest 'original_tenure_start' date.
+  - Assuming we want the longest tenure regardless of whether the employee is currently active or not.
+
+Ambiguities:
+  - The term 'employee' is ambiguous.
+
+Edge Cases:
+  - The 'original_tenure_start' column contains NULL values.
+  - Multiple employees might have the same 'original_tenure_start' date.",SELECT full_name FROM people WHERE original_tenure_start IS NOT NULL AND leave_date IS NULL ORDER BY original_tenure_start ASC;,"               full_name
+0          Richard Moody
+1       Annette Johnston
+2        Gabriel Walters
+3      Jessica Henderson
+4            Vincent Cox
+...                  ...
+31201        Angela Cain
+31202        Jeremy Pace
+31203    Jacob Castaneda
+31204      Debra Ballard
+31205    Kimberly Duncan","Has given correct SQL in analytical response:SELECT full_name 
+FROM people 
+WHERE original_tenure_start = (SELECT MIN(original_tenure_start) FROM people WHERE original_tenure_start IS NOT NULL AND leave_date IS NULL)"
+19,,DAAI - Matt,people,I need the email address of Nathaniel Harris line manager? ,SELECT line_manager_email  FROM people WHERE full_name = 'Nathaniel Harris' ,SELECT line_manager_email FROM people WHERE full_name = 'Nathaniel Harris';,[{'line_manager_email': 'amanda.lane@BankA.com'}],SELECT 'line_manager_email' FROM people WHERE 'full_name' ILIKE 'Nathaniel Harris';,Empty,"Assumptions:
+  - Assuming ""Nathaniel Harris"" refers to a specific individual in the database and not a group of people with the same name.
+  - Assuming the user is looking for the *current* line manager's email address.
+
+Ambiguities:
+  - The database schema does not explicitly state whether ""full_name"" is always stored in the format ""FirstName LastName"".
+
+Edge Cases:
+  - Nathaniel Harris might not be present in the database.
+  - Nathaniel Harris might not have a line manager assigned in the database (e.g., if the `direct_line_manager_id` is NULL or empty).","
+Filtered Choices:
+- Proceed with the query assuming ""Nathaniel Harris"" refers to a single, unique individual.
+- Proceed with the query assuming the user requires the email address of the individual currently designated as Nathaniel Harris's line manager.
+- Assume ""full_name"" consistently follows the ""FirstName LastName"" format.
+- The query should handle this gracefully, potentially returning an empty result set or a specific message indicating no match was found.
+- The query should handle this case gracefully, returning an appropriate indicator (e.g., NULL or an empty string) for the line manager's email address.",SELECT line_manager_email FROM people WHERE full_name ILIKE '%Nathaniel Harris%';,"      line_manager_email
+0  amanda.lane@BankA.com",
+20,,DAAI - Matt,people,What is the average full-time equivilant (FTE) across all employees based on 1 being eveyone is full time? ,SELECT AVG(people.fte) FROM people;,SELECT AVG(fte) FROM people;,[{'avg': 0.9920763167382387}],SELECT AVG(fte) FROM people;,"        avg
+0  0.992076","Assumptions:
+  - Assuming ""average full-time equivalent"" should be calculated across all records in the 'people' table.
+  - Assuming the user is asking for the average FTE and not a representation of the FTE as if everyone worked full-time. (e.g., 70% of employees work full-time)
+
+Ambiguities:
+  - The question doesn't specify whether to consider only active employees or include all employees regardless of their employment status (e.g., those on leave or who have left).
+
+Edge Cases:
+  - The 'fte' column in the 'people' table has a data quality note stating that it should not exceed 1. While no values greater than 1 were observed, it's important to handle potential edge cases where FTE might be incorrectly recorded as greater than 1.","Filtered Choices:
+- Proceed with calculating the average FTE across all records.
+- Proceed with calculating the average FTE.
+- Calculate the average FTE for all employees regardless of their employment status.",SELECT AVG(fte) FROM people;,"        avg
+0  0.992076",
+21,,DAAI - Matt,people,I want to know how many colleague email address domains are different to their line manager domains? ,"SELECT COUNT(*) AS DifferentDomainCount FROM people WHERE SUBSTR(email, INSTR(email, '@') + 1) != SUBSTR(line_manager_email, INSTR(line_manager_email, '@') + 1)",SELECT COUNT(*) AS DifferentDomainCount FROM people WHERE SUBSTRING(email FROM POSITION('@' IN email) + 1) != SUBSTRING(line_manager_email FROM POSITION('@' IN line_manager_email) + 1);,[{'differentdomaincount': 23687}],SELECT COUNT(*) FROM people WHERE substring(email FROM '@(.*)$') NOT ILIKE substring(line_manager_email FROM '@(.*)$');,"   count
+0  23687","Assumptions:
+  - Assuming 'different' domain refers to a comparison of the email domain after the '@' symbol.
+  - Assuming that each colleague has a single line manager.
+
+Ambiguities:
+  - The question doesn't specify how to count if a colleague has the same email domain as their line manager but different from others.
+
+Edge Cases:
+  - Null values in 'email' or 'line_manager_email' fields could lead to inaccurate results.
+  - Inconsistent or incorrect data in the email fields could lead to inaccurate counting.","Filtered Choices:
+- Proceed with comparing the portion of email addresses after the '@' symbol.
+- Proceed with the assumption that each colleague has only one line manager.
+- Count unique colleague-manager pairs with different domains.
+- Exclude records with null values in either 'email' or 'line_manager_email'.",SELECT COUNT(DISTINCT resource_id) FROM people WHERE email IS NOT NULL AND line_manager_email IS NOT NULL AND substring(email FROM '@(.*)$') NOT ILIKE substring(line_manager_email FROM '@(.*)$');,"   count
+0  23687",
+22,,DAAI - Tai ,"Holiday details, PEOPLE",Whats the average time between the the entered holiday date and the actual holiday date for employees grade C? Please round to 2 decimal places.,"SELECT round(avg(JULIANDAY(date) - JULIANDAY(entered_on)), 2) AS AVG_DIFF FROM people A  JOIN holiday_details B ON A.resource_id = B.colleague_id WHERE grade = 'C';","SELECT ROUND(AVG(EXTRACT(EPOCH FROM (date - entered_on)) / 86400), 2) AS AVG_DIFF FROM people A JOIN holiday_details B ON A.resource_id = B.colleague_id WHERE grade = 'C';",Error: 500,"SELECT ROUND(AVG(EXTRACT(DAY FROM (date::date - entered_on::date))), 2) FROM people INNER JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE people.grade ILIKE 'C';",Error: 500,,,,,
+23,,DAAI - Tai ,"ART_data, PEOPLE",Can you provide the job title and grades of the top 5 employees with the highest accured holiday hours? ,"SELECT people.job_title, people.grade FROM holiday_balance JOIN people ON holiday_balance.colleague_id = PEOPLE.resource_id ORDER BY holiday_balance.accrued DESC LIMIT 5;","SELECT people.job_title, people.grade FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id ORDER BY holiday_balance.accrued DESC LIMIT 5;","[{'job_title': 'Manager', 'grade': 'E'}, {'job_title': 'Data Engineering Manager', 'grade': 'E'}, {'job_title': 'Industrial Placement Software Engineering B', 'grade': 'B'}, {'job_title': 'Quality Engineer', 'grade': 'E'}, {'job_title': 'Senior Cyber Threat Operations Analyst', 'grade': 'D'}]","SELECT p.job_title, p.grade FROM people p JOIN holiday_balance hb ON p.resource_id = hb.colleague_id ORDER BY hb.accrued DESC LIMIT 5;","                                     job_title grade
+0                                      Manager     E
+1                     Data Engineering Manager     E
+2  Industrial Placement Software Engineering B     B
+3                             Quality Engineer     E
+4       Senior Cyber Threat Operations Analyst     D","Assumptions:
+  - Assuming ""accrued holiday hours"" refers to the 'accrued' column in the 'holiday_balance' table.
+  - Assuming the user is interested in the top 5 employees based on the highest 'accrued' holiday hours on the latest 'report_date' available in the 'holiday_balance' table.
+
+Ambiguities:
+  - The question doesn't specify how to handle ties in 'accrued' holiday hours. Should we return all employees with the same 'accrued' hours even if it exceeds the top 5?
+
+Edge Cases:
+  - The 'holiday_balance' table might contain multiple entries for the same employee with the same 'report_date'.
+  - The 'people' table might contain multiple entries for the same employee if they have held multiple positions.","Filtered Choices:
+- Proceed with using the 'accrued' column.
+- Proceed with filtering for the maximum 'report_date'.
+- Return only the top 5 employees based on 'accrued' hours, even if there are ties.","SELECT p.job_title, p.grade FROM people p JOIN holiday_balance hb ON p.resource_id = hb.colleague_id WHERE hb.report_date = (SELECT MAX(report_date) FROM holiday_balance) ORDER BY hb.accrued DESC LIMIT 5;","                                     job_title grade
+0                                      Manager     E
+1                     Data Engineering Manager     E
+2  Industrial Placement Software Engineering B     B
+3                             Quality Engineer     E
+4       Senior Cyber Threat Operations Analyst     D",
+24,,DAAI - Tai ,PEOPLE,"On average, how many people are managed by grade F managers?","SELECT AVG (count_manager_ids) FROM (SELECT COUNT (*) AS count_manager_ids, direct_line_manager_id FROM people WHERE direct_line_manager_id IN (SELECT resource_id FROM people WHERE grade = 'F') GROUP BY 2);","SELECT AVG(count_manager_ids) FROM (SELECT COUNT(*) AS count_manager_ids, direct_line_manager_id FROM people WHERE direct_line_manager_id IN (SELECT resource_id FROM people WHERE grade = 'F') GROUP BY direct_line_manager_id) AS subquery;",[{'avg': 9.898016997167138}],SELECT CAST(COUNT(resource_id) AS REAL) / COUNT(DISTINCT direct_line_manager_id) FROM people WHERE grade ILIKE 'F';,"   ?column?
+0  2.061021","Assumptions:
+  - Assuming ""managed by"" refers to the direct reporting relationship in the organization's structure.
+  - Assuming that the 'grade' column in the 'people' table accurately reflects the current grade of each manager.
+
+Ambiguities:
+  - The question doesn't specify how to handle cases where a manager's grade is not available.
+
+Edge Cases:
+  - The 'is_manager' flag in the 'people' table might not be completely accurate, as indicated in the schema description.
+  - There might be multiple entries for the same person in the 'people' table, potentially representing different roles or positions held by the same individual.","Filtered Choices:
+- Proceed with the assumption that 'managed by' means direct reports.
+- Use the 'grade' column directly to identify managers with grade 'F'.
+- Exclude managers with missing grade information from the calculation.
+- The 'is_manager' flag in the 'people' table might not be completely accurate, as indicated in the schema description.: focus on grade f managers and ignore this column",SELECT CASE WHEN COUNT(DISTINCT direct_line_manager_id) = 0 THEN 0 ELSE CAST(COUNT(resource_id) AS REAL) / COUNT(DISTINCT direct_line_manager_id) END FROM people WHERE grade = 'F';,"   ?column?
+0  2.061021",
+25,,DAAI - Tai ,"PEOPLE, Holiday_balance",Can you provide the date Robert Benson's most recent leave? ,SELECT MAX(DATE) from people A  JOIN holiday_details B  ON A.resource_id = B.colleague_id  WHERE full_name  LIKE '%Robert Benson%' AND taken_tf = 1;,SELECT MAX(DATE) FROM people A JOIN holiday_details B ON A.resource_id = B.colleague_id WHERE full_name LIKE '%Robert Benson%' AND taken_tf = 1;,Error: 500,SELECT MAX(date) FROM holiday_details WHERE colleague_id IN (SELECT resource_id FROM people WHERE full_name ILIKE '%Robert Benson%');,0  2024-09-18,"Assumptions:
+  - Assuming ""most recent leave"" refers to the most recent *future* leave request, as there is no information available on past leave.
+  - Assuming we are looking for Robert Benson's leave based on his full name.
+
+Ambiguities:
+  - The question doesn't specify whether it requires the start date, end date, or duration of Robert Benson's leave.
+
+Edge Cases:
+  - Robert Benson may have multiple entries in the `people` table, especially if there were changes in his employment details or if historical data is maintained.
+  - The `leave_date` field in the `people` table might be NULL for Robert Benson.",Not sure what this question even means,,,
+26,,DAAI - Tai ,PEOPLE,Name of the colleagues scheduled to work the most hours? ,SELECT full_name FROM people WHERE scheduled_working_hours = (select MAX(scheduled_working_hours) FROM people);,SELECT full_name FROM people WHERE scheduled_working_hours = (SELECT MAX(scheduled_working_hours) FROM people);,[{'full_name': 'Derrick Sparks'}],SELECT full_name FROM people WHERE scheduled_working_hours = (SELECT MAX(scheduled_working_hours) FROM people);,Derrick Sparks,"Assumptions:
+  - The user wants to retrieve the full names of all individuals who have the highest scheduled working hours in the 'people' table.
+
+Ambiguities:
+  - The query does not specify how to handle ties in 'scheduled_working_hours'. There might be multiple people with the same maximum scheduled working hours.
+
+Edge Cases:
+  - The 'scheduled_working_hours' column could contain NULL values for some individuals.","
+Filtered Choices:
+- Proceed with the assumption that the user is looking for the full names of all people with the maximum scheduled working hours.
+- Return all individuals who have the maximum 'scheduled_working_hours', even if there are ties.",SELECT full_name FROM people WHERE scheduled_working_hours = (SELECT MAX(scheduled_working_hours) FROM people);,Derrick Sparks,
+27,,DAAI - Rita,"people, Holiday_balance",I'm Philip Young. What is the total amount of holiday not booked by my direct team?,SELECT SUM(unbooked) FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id  WHERE direct_line_manager_name = 'Philip Young';,SELECT SUM(unbooked) FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE direct_line_manager_name = 'Philip Young';,[{'sum': 561.25}],SELECT SUM(hb.unbooked) FROM people AS p JOIN holiday_balance AS hb ON p.resource_id = hb.colleague_id WHERE p.direct_line_manager_id = (SELECT resource_id FROM people WHERE full_name ILIKE 'Philip Young');,[{'sum': 561.25}],"Assumptions:
+  - Assuming ""holiday not booked"" refers to the ""unbooked"" holiday hours in the `holiday_balance` table.
+  - Assuming ""direct team"" refers to all employees who have Philip Young listed as their `direct_line_manager_name` in the `people` table.
+
+Ambiguities:
+  - The question doesn't specify if it requires the total unbooked holiday hours for Philip Young's entire team or the sum of unbooked hours for each team member.
+  - The question doesn't clarify whether ""holiday not booked"" should include ""hours_not_using_workday"".
+
+Edge Cases:
+  - The `people` table contains a significant number of NULL values in the `original_tenure_start` column. These may represent new employees or data issues.
+  - The `holiday_balance` table has only one distinct `report_date`. The query will only consider data from that specific date.","Filtered Choices:
+- Use the ""unbooked"" column from `holiday_balance` to represent ""holiday not booked"".
+- Use the `direct_line_manager_name` column in `people` table to identify Philip Young's direct reports.
+- Calculate the total unbooked holiday hours for the entire team.
+- Proceed with the calculation using the available data from the single `report_date`.",SELECT SUM(hb.unbooked) FROM people AS p JOIN holiday_balance AS hb ON p.resource_id = hb.colleague_id WHERE p.direct_line_manager_name ILIKE 'Philip Young%';,[{'sum': 561.25}],
+28,,DAAI - Rita,"people, Holiday_balance",I'm Philip Young. What is the total amount of holiday still needed to be booked by my direct team?,SELECT SUM(unbooked) FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id  WHERE direct_line_manager_name = 'Philip Young';,SELECT SUM(unbooked) FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE direct_line_manager_name = 'Philip Young';,[{'sum': 561.25}],SELECT SUM(hb.unbooked) FROM people AS p JOIN holiday_balance AS hb ON p.resource_id = hb.colleague_id WHERE p.direct_line_manager_name ILIKE 'Philip Young';,[{'sum': 561.25}],"Assumptions:
+  - Assuming ""Philip Young"" is a valid and unique name in the database to identify the user.
+  - Assuming ""direct team"" refers to individuals who directly report to Philip Young (i.e., their 'direct_line_manager_name' is 'Philip Young').
+  - Assuming ""holiday still needed to be booked"" refers to the ""unbooked"" holiday hours in the 'holiday_balance' table.
+
+Ambiguities:
+  - The specific date for which the total amount of holiday needed to be booked is unclear.
+
+Edge Cases:
+  - The 'holiday_balance' table may contain multiple entries for the same colleague on the same 'report_date' due to potential data duplication.
+  - The 'people' table contains NULL values for 'data_source' and 'original_tenure_start', which may impact the accuracy of identifying Philip Young's direct team.","Filtered Choices:
+- Proceed with querying for ""Philip Young"" assuming name uniqueness.
+- Use 'direct_line_manager_name' to identify Philip Young's direct reports.
+- Use the 'unbooked' column in the 'holiday_balance' table to represent ""holiday still needed to be booked"".
+- Calculate based on the latest available 'report_date' in 'holiday_balance'.
+- Sum the 'unbooked' hours across all entries for a colleague on the same 'report_date' to handle potential duplicates.",SELECT SUM(hb.unbooked) FROM people AS p JOIN holiday_balance AS hb ON p.resource_id = hb.colleague_id WHERE p.direct_line_manager_name ILIKE 'Philip Young' AND hb.report_date = (SELECT MAX(report_date) FROM holiday_balance);,[{'sum': 561.25}],
+29,,DAAI - Rita,"people, Holiday_balance",My file id is 00069268. What is the total amount of holiday not booked by my direct team?,SELECT SUM(unbooked) FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id  WHERE direct_line_manager_id = '00069268';,SELECT SUM(unbooked) FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE direct_line_manager_id = '00069268';,[{'sum': 561.25}],SELECT SUM(hb.unbooked) FROM people AS p JOIN holiday_balance AS hb ON p.resource_id = hb.colleague_id WHERE p.direct_line_manager_id ILIKE '00069268';,[{'sum': 561.25}],"Assumptions:
+  - Assuming 'file id' refers to 'resource_id' in the 'people' table.
+  - Assuming 'holiday not booked' refers to the 'unbooked' field in the 'holiday_balance' table.
+  - Assuming the query requires the total 'unbooked' holiday hours for the current date.
+
+Ambiguities:
+  - The term 'direct team' is ambiguous. It could refer to:
+
+Edge Cases:
+  - Handling cases where a user has no direct reports.
+  - Addressing potential inconsistencies in the 'holiday_balance' data.","Filtered Choices:
+- Proceed with the assumption that 'file id' maps to 'resource_id'.
+- Proceed with using the 'unbooked' field from 'holiday_balance'.
+- Use the latest 'report_date' from the 'holiday_balance' table to filter for current data.
+- Colleagues reporting directly to the user (i.e., user is their 'direct_line_manager_id').",SELECT SUM(hb.unbooked) FROM people AS p JOIN holiday_balance AS hb ON p.resource_id = hb.colleague_id WHERE p.direct_line_manager_id LIKE '%00069268%' AND hb.report_date = (SELECT MAX(report_date) FROM holiday_balance);,[{'sum': 561.25}],
+30,,DAAI - Rita,people,"How many senior colleagues are in CDAO (cc_layer_2)? Senior colleagues are grades F, G and X","SELECT COUNT(*) FROM people  WHERE cc_layer_2 LIKE '%CDAO%' AND grade IN ('F', 'G', 'X');","SELECT COUNT(*) FROM people WHERE cc_layer_2 LIKE '%CDAO%' AND grade IN ('F', 'G', 'X');",[{'count': 105}],"SELECT COUNT(*) FROM people WHERE cc_layer_2 ILIKE 'CDAO' AND grade IN ('F', 'G', 'X');",68,"Assumptions:
+  - Assuming 'CDAO (cc_layer_2)' refers to colleagues whose 'cc_layer_2' field is 'CDAO'.
+  - Assuming that the user wants the number of distinct colleagues (i.e., counting each colleague only once) who meet the criteria.
+
+Ambiguities:
+  - The question does not specify whether it's asking for the current number of senior colleagues or the number at a specific point in time.
+
+Edge Cases:
+  - The 'grade' field could potentially contain NULL values or unexpected values (e.g., grades other than 'F', 'G', 'X').","Filtered Choices:
+- Assuming 'CDAO (cc_layer_2)' refers to colleagues whose 'cc_layer_2' field is 'CDAO'.: any cc_layer_2 with 'CDAO' in it
+- Use the COUNT(DISTINCT resource_id) function to count distinct colleagues.
+- Assume the user is interested in the current number of senior colleagues.","SELECT COUNT(DISTINCT resource_id) FROM people WHERE cc_layer_2 ILIKE '%CDAO%' AND grade IN ('F', 'G', 'X');",[{'count': 105}],Kind of forced correct answer by specifying wildcards for CDAO
+31,,DAAI - Rita,people,How many F+ colleagues are in CDAO (cc_layer_2)? Exclude MT grade,SELECT COUNT(*) FROM people  WHERE cc_layer_2 LIKE '%CDAO%' AND grade >= 'F' AND grade <> 'MT';,SELECT COUNT(*) FROM people WHERE cc_layer_2 LIKE '%CDAO%' AND grade >= 'F' AND grade <> 'MT';,[{'count': 106}],SELECT COUNT(*) FROM people WHERE cc_layer_2 ILIKE 'CDAO' AND grade ILIKE 'F%' AND grade NOT ILIKE 'MT';,"   count
+0     58","Assumptions:
+  - Assuming ""F+ colleagues"" refers to all colleagues with a grade starting with 'F' and followed by one or more characters (e.g., 'F1', 'F2', 'F+').
+  - Assuming ""CDAO"" refers to the 'Chief Data & Analytics Office' division.
+  - Assuming ""Exclude MT grade"" means to exclude colleagues with a grade of 'MT', regardless of case.
+
+Ambiguities:
+  - The term ""F+ colleagues"" is not explicitly defined. It's unclear if it refers to a specific grading convention or a broader categorization.
+
+Edge Cases:
+  - There might be NULL values in the `grade` column.","Filtered Choices:
+- Assuming ""F+ colleagues"" refers to all colleagues with a grade starting with 'F' and followed by one or more characters (e.g., 'F1', 'F2', 'F+').: F+ means every letter above F inclusive
+- Use `division = 'Chief Data & Analytics Office'` to filter for CDAO division.
+- Use `UPPER(grade) != 'MT'` to exclude 'MT' grades (case-insensitive).",SELECT COUNT(*) FROM people WHERE division ILIKE '%Chief Data & Analytics Office%' AND grade >= 'F' AND UPPER(grade) != 'MT';,"   count
+0     68",Tried using division column
+32,,DAAI - Rita,"people, art",I'm Kimberly Mcclure. How many colleagues by grade have yet to complete ART this quarter (Q3 2024 - ART) in my overall team (layer_5)?,"SELECT grade, COUNT(DISTINCT a.resource_id) FROM art AS a JOIN people AS p ON a.resource_id =  p.resource_id WHERE layer_5= 'Kimberly Mcclure' AND compliance_program = 'Q3 2024 - ART'  AND final_art_status IN ('In progress', 'Not started') GROUP BY grade;","SELECT grade, COUNT(DISTINCT a.resource_id) FROM art AS a JOIN people AS p ON a.resource_id = p.resource_id WHERE layer_5 = 'Kimberly Mcclure' AND compliance_program = 'Q3 2024 - ART' AND final_art_status IN ('In progress', 'Not started') GROUP BY grade;","[{'grade': 'A', 'count': 1}, {'grade': 'B', 'count': 1}, {'grade': 'C', 'count': 6}, {'grade': 'D', 'count': 9}, {'grade': 'E', 'count': 25}, {'grade': 'F', 'count': 5}, {'grade': 'U', 'count': 4}, {'grade': 'X', 'count': 1}]","SELECT p.grade, COUNT(*) FROM people AS p JOIN art AS a ON p.resource_id = a.resource_id WHERE p.layer_5_file_id = (SELECT resource_id FROM people WHERE full_name ILIKE 'Kimberly Mcclure') AND a.compliance_program ILIKE 'Q3 2024 - ART' AND a.final_art_status NOT ILIKE 'Completed' GROUP BY p.grade;","  grade  count
+0     A      4
+1     B      4
+2     C     24
+3     D     36
+4     E    100
+5     F     20
+6     U     16
+7     X      4","Assumptions:
+  - Assuming ""ART"" refers to the 'Q3 2024 - ART' compliance program as it's mentioned with the quarter.
+  - Assuming ""yet to complete"" means colleagues with a 'final_art_status' other than 'Completed' or 'Completed late' in the 'art' table.
+  - Assuming ""colleagues by grade"" refers to a count of distinct colleagues in each grade within Kimberly's overall team.
+
+Ambiguities:
+  - The term ""overall team"" is ambiguous. It is unclear whether this refers to all colleagues sharing the same 'layer_5' as Kimberly, or if it includes colleagues in lower layers within her 'layer_5'.
+
+Edge Cases:
+  - The 'art' table contains duplicates in the 'resource_id' column. This could lead to an inaccurate count of colleagues.
+  - The 'art' table has data quality issues with 'course_completion_date' being later than 'art_due_date'.","Filtered Choices:
+- Proceed with querying for 'Q3 2024 - ART'.
+- Consider 'final_art_status' values besides 'Completed' and 'Completed late' as 'not yet completed'.
+- Count distinct colleagues based on 'resource_id'.
+- Assume ""overall team"" refers to all colleagues within Kimberly's 'layer_5'.
+- Ignore the 'course_completion_date' and rely solely on 'final_art_status' to determine completion.","SELECT p.grade, COUNT(DISTINCT p.resource_id) FROM people AS p JOIN art AS a ON p.resource_id = a.resource_id WHERE p.layer_5_file_id = (SELECT resource_id FROM people WHERE full_name ILIKE '%Kimberly Mcclure%') AND a.compliance_program ILIKE '%Q3 2024 - ART%' AND a.final_art_status NOT ILIKE '%Completed%' AND a.final_art_status NOT ILIKE '%Completed late%' GROUP BY p.grade;","  grade  count
+0     A      1
+1     B      1
+2     C      6
+3     D      9
+4     E     25
+5     F      5
+6     U      4
+7     X      1",
+33,,DAAI - Rita,"people, art",I'm Kimberly Mcclure. How many colleagues by grade have yet to complete Q3 2024 - ART in my team (layer_5)?,"SELECT grade, COUNT(DISTINCT a.resource_id) FROM art AS a JOIN people AS p ON a.resource_id =  p.resource_id WHERE layer_5= 'Kimberly Mcclure' AND compliance_program = 'Q3 2024 - ART'  AND final_art_status IN ('In progress', 'Not started') GROUP BY grade;","SELECT grade, COUNT(DISTINCT a.resource_id) FROM art AS a JOIN people AS p ON a.resource_id = p.resource_id WHERE layer_5 = 'Kimberly Mcclure' AND compliance_program = 'Q3 2024 - ART' AND final_art_status IN ('In progress', 'Not started') GROUP BY grade;","[{'grade': 'A', 'count': 1}, {'grade': 'B', 'count': 1}, {'grade': 'C', 'count': 6}, {'grade': 'D', 'count': 9}, {'grade': 'E', 'count': 25}, {'grade': 'F', 'count': 5}, {'grade': 'U', 'count': 4}, {'grade': 'X', 'count': 1}]","SELECT COUNT(DISTINCT T1.resource_id), T1.grade FROM people AS T1 INNER JOIN art AS T2 ON T1.resource_id = T2.resource_id WHERE T1.layer_5_file_id = ( SELECT resource_id FROM people WHERE full_name ILIKE 'Kimberly Mcclure' ) AND T2.compliance_program ILIKE 'Q3 2024 - ART' AND NOT T2.final_art_status ILIKE 'Completed' GROUP BY T1.grade;","   count grade
+0      1     A
+1      1     B
+2      6     C
+3      9     D
+4     25     E
+5      5     F
+6      4     U
+7      1     X","Assumptions:
+  - Assuming ""colleagues by grade"" refers to counting colleagues who share the same grade as Kimberly Mcclure.
+  - Assuming ""Q3 2024 - ART"" refers to the 'compliance_program' field in the 'art' table.
+  - Assuming ""yet to complete"" implies colleagues with a 'final_art_status' other than 'Completed' for 'Q3 2024 - ART'.
+
+Ambiguities:
+  - The term ""team"" can be subjective. It's unclear whether it refers to a specific organizational unit or a broader group.
+
+Edge Cases:
+  - The 'art' table contains duplicate 'resource_id' values. This might lead to an inaccurate count of colleagues.
+  - The 'compliance_program' field in the 'art' table contains inconsistent values. It's essential to ensure accurate filtering for 'Q3 2024 - ART'.","Filtered Choices:
+- Proceed with the assumption that ""Q3 2024 - ART"" refers to the 'compliance_program' field.
+- Consider 'final_art_status' values like 'Not Started', 'In Progress', 'Overdue' etc. as ""yet to complete"".
+- Could you please clarify what you mean by ""team"" in this context? Are you referring to a specific department, reporting line, or any other grouping within the organization? - anyone team layer 5
+- Use DISTINCT keyword to count distinct colleagues based on 'resource_id' to avoid overcounting due to duplicates.","SELECT COUNT(DISTINCT T1.resource_id), T1.grade FROM people AS T1 INNER JOIN art AS T2 ON T1.resource_id = T2.resource_id WHERE T1.layer_5_file_id = ( SELECT resource_id FROM people WHERE full_name ILIKE '%Kimberly Mcclure%' ) AND T2.compliance_program ILIKE '%Q3 2024 - ART%' AND NOT T2.final_art_status ILIKE '%Completed%' GROUP BY T1.grade;","   count grade
+0      1     A
+1      1     B
+2      6     C
+3      9     D
+4     25     E
+5      5     F
+6      4     U
+7      1     X",
+34,,DAAI - Rita,"people, art",I'm Kimberly Mcclure. How many colleagues by grade have yet to complete Q3 2024 - ART in my team (layer_5)? Use DISTINCT id,"SELECT grade, COUNT(DISTINCT a.resource_id) FROM art AS a JOIN people AS p ON a.resource_id =  p.resource_id WHERE layer_5= 'Kimberly Mcclure' AND compliance_program = 'Q3 2024 - ART'  AND final_art_status IN ('In progress', 'Not started') GROUP BY grade;","SELECT grade, COUNT(DISTINCT a.resource_id) FROM art AS a JOIN people AS p ON a.resource_id = p.resource_id WHERE layer_5 = 'Kimberly Mcclure' AND compliance_program = 'Q3 2024 - ART' AND final_art_status IN ('In progress', 'Not started') GROUP BY grade;","[{'grade': 'A', 'count': 1}, {'grade': 'B', 'count': 1}, {'grade': 'C', 'count': 6}, {'grade': 'D', 'count': 9}, {'grade': 'E', 'count': 25}, {'grade': 'F', 'count': 5}, {'grade': 'U', 'count': 4}, {'grade': 'X', 'count': 1}]","SELECT p.grade, COUNT(DISTINCT p.resource_id) FROM people AS p JOIN art AS a ON p.resource_id = a.resource_id WHERE a.compliance_program ILIKE 'Q3 2024 - ART' AND a.final_art_status NOT ILIKE 'Completed' AND p.layer_5_file_id = (SELECT resource_id FROM people WHERE full_name ILIKE 'Kimberly Mcclure') GROUP BY p.grade;","   count grade
+0      1     A
+1      1     B
+2      6     C
+3      9     D
+4     25     E
+5      5     F
+6      4     U
+7      1     X","Assumptions:
+  - Assuming ""yet to complete Q3 2024 - ART"" refers to colleagues with a 'final_art_status' other than 'Completed' in the 'art' table for the 'Q3 2024 - ART' compliance program.
+  - Assuming ""colleagues by grade"" refers to a count of distinct colleagues grouped by their respective grades.
+  - Assuming Kimberly Mcclure is a valid colleague in the 'people' table and her 'layer_5' value correctly identifies her team.
+
+Ambiguities:
+  - The term ""colleagues"" is ambiguous and could refer to:
+
+Edge Cases:
+  - The 'art' table has duplicate 'resource_id' values.
+  - The 'data_source' and 'funding_source' columns in the 'people' table contain NULL values.
+  - The 'compliance_program', 'course_completion_date', 'course_completion_status', and 'final_art_status' columns in the 'art' table have data quality warnings.","Filtered Choices:
+- Use 'final_art_status' != 'Completed' as the filter condition.
+- Use COUNT(DISTINCT p.resource_id) and GROUP BY p.grade to count distinct colleagues by grade.
+- Retrieve Kimberly Mcclure's 'layer_5' value from the 'people' table.
+- All individuals in the 'people' table, regardless of their employment type.
+- Use DISTINCT within the join condition to avoid overcounting colleagues.","SELECT p.grade, COUNT(DISTINCT p.resource_id) FROM people AS p JOIN art AS a ON p.resource_id = a.resource_id WHERE a.compliance_program LIKE 'Q3 2024 - ART' AND a.final_art_status != 'Completed' AND p.layer_5_file_id = (SELECT resource_id FROM people WHERE full_name LIKE 'Kimberly Mcclure') GROUP BY p.grade;","   count grade
+0      1     A
+1      1     B
+2      6     C
+3      9     D
+4     25     E
+5      5     F
+6      4     U
+7      1     X",
+35,,DAAI - Rita,"people, Holiday_balance",My file id is 00069268  (layer_6). What is the amount of holiday still to take for each colleague (resource_id) in my team ordered by biggest first,"SELECT resource_id, untaken FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id  WHERE layer_6_file_id = '00069268' ORDER BY 2 DESC;","SELECT resource_id, untaken FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE layer_6_file_id = '00069268' ORDER BY untaken DESC;","[{'resource_id': '00033335', 'untaken': 257.251183}, {'resource_id': '00069268', 'untaken': 203.0}, {'resource_id': '00005127', 'untaken': 202.0}, {'resource_id': '00075927', 'untaken': 183.0}, {'resource_id': '42972402', 'untaken': 182.5}, {'resource_id': '00069498', 'untaken': 176.0}, {'resource_id': '00034885', 'untaken': 154.0}, {'resource_id': '00009049', 'untaken': 154.0}, {'resource_id': '66485900', 'untaken': 146.943548}, {'resource_id': '00983477', 'untaken': 126.0}, {'resource_id': '00789229', 'untaken': 122.75}]",,,,,,,
+36,,DAAI - Rita,"people, Holiday_balance",My file id is 00069268  (layer_6_file_id). What is the amount of holiday still to take for each colleague  (resource_id)  in my team ordered by biggest first,"SELECT resource_id, untaken FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id  WHERE layer_6_file_id = '00069268' ORDER BY 2 DESC;","SELECT resource_id, untaken FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE layer_6_file_id = '00069268' ORDER BY untaken DESC;","[{'resource_id': '00033335', 'untaken': 257.251183}, {'resource_id': '00069268', 'untaken': 203.0}, {'resource_id': '00005127', 'untaken': 202.0}, {'resource_id': '00075927', 'untaken': 183.0}, {'resource_id': '42972402', 'untaken': 182.5}, {'resource_id': '00069498', 'untaken': 176.0}, {'resource_id': '00034885', 'untaken': 154.0}, {'resource_id': '00009049', 'untaken': 154.0}, {'resource_id': '66485900', 'untaken': 146.943548}, {'resource_id': '00983477', 'untaken': 126.0}, {'resource_id': '00789229', 'untaken': 122.75}]",,,,,,,
+37,,DAAI - Rita,"people, Holiday_balance",My file id is 00069268  (layer_6). What is the amount of holiday not taken for each colleague in my team ordered by biggest first. Give the name and email,"SELECT full_name, email, untaken FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id  WHERE layer_6_file_id = '00069268' ORDER BY 3 DESC;","SELECT full_name, email, untaken FROM holiday_balance JOIN people ON holiday_balance.colleague_id = people.resource_id WHERE layer_6_file_id = '00069268' ORDER BY untaken DESC;","[{'full_name': 'Jillian Stokes', 'email': 'jillian.stokes@BankB.com', 'untaken': 257.251183}, {'full_name': 'Philip Young', 'email': 'philip.young@BankA.com', 'untaken': 203.0}, {'full_name': 'Alex Johnson', 'email': 'gregory.roy@BankA.com', 'untaken': 202.0}, {'full_name': 'Jennifer Coleman', 'email': 'jennifer.coleman@BankD.com', 'untaken': 183.0}, {'full_name': 'Janet Welch', 'email': 'janet.welch@BankA.com', 'untaken': 182.5}, {'full_name': 'David Cordova', 'email': 'david.cordova@BankC.com', 'untaken': 176.0}, {'full_name': 'Regina Wilson', 'email': 'ashley.washington@BankB.com', 'untaken': 154.0}, {'full_name': 'Joan Bennett', 'email': 'joan.bennett@BankA.com', 'untaken': 154.0}, {'full_name': 'Jennifer Blankenship', 'email': 'jennifer.blankenship@BankC.com', 'untaken': 146.943548}, {'full_name': 'Summer Schultz', 'email': 'summer.schultz@BankD.com', 'untaken': 126.0}, {'full_name': 'Jason Perez', 'email': 'jason.perez@BankC.com', 'untaken': 122.75}]","SELECT full_name, email, untaken FROM people INNER JOIN holiday_balance ON people.resource_id = holiday_balance.colleague_id WHERE people.layer_6_file_id = '00069268' ORDER BY untaken DESC;","               full_name                           email     untaken
+0         Jillian Stokes        jillian.stokes@BankB.com  257.251183
+1           Philip Young          philip.young@BankA.com  203.000000
+2           Alex Johnson           gregory.roy@BankA.com  202.000000
+3       Jennifer Coleman      jennifer.coleman@BankD.com  183.000000
+4            Janet Welch           janet.welch@BankA.com  182.500000
+5          David Cordova         david.cordova@BankC.com  176.000000
+6          Regina Wilson     ashley.washington@BankB.com  154.000000
+7           Joan Bennett          joan.bennett@BankA.com  154.000000
+8   Jennifer Blankenship  jennifer.blankenship@BankC.com  146.943548
+9         Summer Schultz        summer.schultz@BankD.com  126.000000
+10           Jason Perez           jason.perez@BankC.com  122.750000","Assumptions:
+  - Assuming 'amount of holiday not taken' refers to the ""untaken"" holiday hours in the `holiday_balance` table.
+  - Assuming the user's 'team' refers to all colleagues who share the same `layer_6_file_id` as the user.
+  - Assuming the user is referring to the latest holiday balance snapshot available in the `holiday_balance` table.
+
+Ambiguities:
+  - The user's question doesn't specify if they are seeking information about colleagues with a positive amount of untaken holiday or all colleagues within their team.
+
+Edge Cases:
+  - The `holiday_balance` table may contain multiple entries for the same colleague on the same report date.
+  - Some colleagues might not have any holiday balance information available in the `holiday_balance` table.","Filtered Choices:
+- Use the ""untaken"" column from `holiday_balance` to represent 'amount of holiday not taken'.
+- Use `layer_6_file_id` to identify the user's team.
+- Use the most recent `report_date` from `holiday_balance`.
+- Return only colleagues with untaken holiday (untaken > 0).","SELECT p.full_name, p.email, hb.untaken FROM people p INNER JOIN ( SELECT colleague_id, untaken, ROW_NUMBER() OVER (PARTITION BY colleague_id ORDER BY report_date DESC) as rn FROM holiday_balance ) hb ON p.resource_id = hb.colleague_id WHERE p.layer_6_file_id = '00069268' AND hb.untaken > 0 AND hb.rn = 1 ORDER BY hb.untaken DESC;","               full_name                           email     untaken
+0         Jillian Stokes        jillian.stokes@BankB.com  257.251183
+1           Philip Young          philip.young@BankA.com  203.000000
+2           Alex Johnson           gregory.roy@BankA.com  202.000000
+3       Jennifer Coleman      jennifer.coleman@BankD.com  183.000000
+4            Janet Welch           janet.welch@BankA.com  182.500000
+5          David Cordova         david.cordova@BankC.com  176.000000
+6          Regina Wilson     ashley.washington@BankB.com  154.000000
+7           Joan Bennett          joan.bennett@BankA.com  154.000000
+8   Jennifer Blankenship  jennifer.blankenship@BankC.com  146.943548
+9         Summer Schultz        summer.schultz@BankD.com  126.000000
+10           Jason Perez           jason.perez@BankC.com  122.750000",
+38,,DAAI - Rita,people,My file id is 00067222. What is the percentage of non perm workers in my direct team?,SELECT (SUM(CASE WHEN high_lev_workertype <> 'Permanent' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) FROM people WHERE direct_line_manager_id = '00067222';,SELECT (SUM(CASE WHEN high_lev_workertype <> 'Permanent' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) FROM people WHERE direct_line_manager_id = '00067222';,[{'?column?': 50.0}],,,,,,,
+39,,DAAI - Rita,people,My file id is 00067222. Can you please tell me the percentage of non permanent workers in my team?,SELECT (SUM(CASE WHEN high_lev_workertype <> 'Permanent' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) FROM people WHERE direct_line_manager_id = '00067222';,SELECT (SUM(CASE WHEN high_lev_workertype <> 'Permanent' THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) FROM people WHERE direct_line_manager_id = '00067222';,[{'?column?': 50.0}],WITH RECURSIVE team_members AS (SELECT resource_id FROM people WHERE resource_id = '00067222' UNION SELECT p.resource_id FROM people p INNER JOIN team_members tm ON p.direct_line_manager_id = tm.resource_id) SELECT CAST(SUM(CASE WHEN worker_type <> '1. Permanent Colleague' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(*) FROM people WHERE resource_id IN (SELECT resource_id FROM team_members);,"    ?column?
+0  50.819672","Assumptions:
+  - Assuming 'file id' refers to 'resource_id' in the 'people' table.
+  - Assuming the user's understanding of 'team' aligns with a managerial hierarchy.
+
+Ambiguities:
+  - The term 'non-permanent workers' is ambiguous.
+
+Edge Cases:
+  - The user's manager might not have any other direct reports besides the user.
+  - The 'people' table may contain outdated or incomplete records.","Filtered Choices:
+- Proceed with the assumption that 'file id' maps to 'resource_id'.
+- Use the 'direct_line_manager_id' to identify the user's team, assuming all colleagues reporting to the same manager constitute a 'team'.
+- Assume 'non-permanent workers' refers to any colleague whose 'worker_type' is not '1. Permanent Colleague'.",SELECT CAST(SUM(CASE WHEN worker_type != '1. Permanent Colleague' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(*) FROM people WHERE direct_line_manager_id = (SELECT direct_line_manager_id FROM people WHERE resource_id = '00067222');,"    ?column?
+0  45.454545",
+40,,DAAI - Rita,"people, Holiday_details",My file id is 00069268  (layer_6_file_id). Who in my team has booked the new year's bank holiday? Want the id and name,"SELECT colleague_id, full_name FROM people JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE layer_6_file_id = '00069268' AND DATE = '2024-01-01' GROUP BY colleague_id HAVING SUM(hours) > 1","SELECT colleague_id, full_name FROM people JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE layer_6_file_id = '00069268' AND DATE = '2024-01-01' GROUP BY colleague_id HAVING SUM(hours) > 1;",Error: 500,,,,,,,
+41,,DAAI - Rita,"people, Holiday_details",My file id is 00069268  (layer_6_file_id). Who in my team has booked holiday for January first of this year? Want the id and name,"SELECT colleague_id, full_name FROM people JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE layer_6_file_id = '00069268' AND DATE = '2024-01-01' GROUP BY colleague_id HAVING SUM(hours) > 1","SELECT colleague_id, full_name FROM people JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE layer_6_file_id = '00069268' AND DATE = '2024-01-01' GROUP BY colleague_id HAVING SUM(hours) > 1;",Error: 500,"SELECT p.resource_id, p.full_name FROM people AS p LEFT JOIN holiday_details AS hd ON p.resource_id = hd.colleague_id WHERE p.layer_6_file_id = '00069268' AND hd.date = '2024-01-01' AND hd.colleague_id IS NULL;",Empty,"Assumptions:
+  - Assuming ""team"" refers to the colleagues who share the same 'layer_6_file_id' as the user.
+  - Assuming ""holiday"" refers to any type of leave recorded in the 'holiday_details' table.
+  - Assuming the user is referring to the current year based on the report date in the 'holiday_balance' table (2024-07-22 implies the year is 2024).
+
+Ambiguities:
+  - The term ""team"" is not clearly defined in the database schema. It's unclear whether it refers to a specific organizational unit or a reporting structure.
+  - The database contains multiple columns related to holiday, including 'booked', 'taken', and 'booked_not_yet_taken'. It's unclear which column should be used to determine if someone has booked holiday for January 1st.
+
+Edge Cases:
+  - Colleagues might have booked holiday for part of the day on January 1st, not the entire day. The current query might not capture these instances.
+  - There might be colleagues who joined ","Filtered Choices:
+- Proceed with the assumption that 'team' refers to colleagues with the same 'layer_6_file_id'.
+- Proceed with the assumption that 'holiday' refers to any leave type.
+- Use 2024 as the year for January 1st.","SELECT p.resource_id, p.full_name FROM people AS p WHERE p.layer_6_file_id = '00069268' AND NOT EXISTS (SELECT 1 FROM holiday_details AS hd WHERE hd.colleague_id = p.resource_id AND hd.date = '2024-01-01');","Augmented SQL Generation Results:
+  resource_id         full_name
+0    49672490    Rebecca Pierce
+1    00075927  Jennifer Coleman
+2    00005127      Alex Johnson
+3    42972402       Janet Welch",Not sure whats right here
+42,,DAAI - Rita,"people, Holiday_details",My file id is 00069268  (layer_6_file_id). Who in my team has not booked holiday for January first of this year? Want the id and name,"WITH colleagues_with_booked_date AS ( SELECT colleague_id  FROM people JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE layer_6_file_id = '00069268' AND DATE = '2024-01-01' GROUP BY colleague_id HAVING SUM(hours) > 1 ) SELECT resource_id, full_name FROM people p LEFT JOIN colleagues_with_booked_date c ON p.resource_id = c.colleague_id WHERE layer_6_file_id = '00069268' AND c.colleague_id IS NULL;","WITH colleagues_with_booked_date AS (SELECT colleague_id FROM people JOIN holiday_details ON people.resource_id = holiday_details.colleague_id WHERE layer_6_file_id = '00069268' AND DATE = '2024-01-01' GROUP BY colleague_id HAVING SUM(hours) > 1) SELECT resource_id, full_name FROM people p LEFT JOIN colleagues_with_booked_date c ON p.resource_id = c.colleague_id WHERE layer_6_file_id = '00069268' AND c.colleague_id IS NULL;","[{'resource_id': '00005127', 'full_name': 'Alex Johnson'}, {'resource_id': '42972402', 'full_name': 'Janet Welch'}, {'resource_id': '00075927', 'full_name': 'Jennifer Coleman'}, {'resource_id': '49672490', 'full_name': 'Rebecca Pierce'}]",,,,,,,
+43,,DAAI - Rita,"people, Holiday_balance",What colleagues in CDAO (cc_layer_2) have more than 80% of their holidays left unbooked?,SELECT full_name FROM holiday_balance JOIN people ON people.resource_id = holiday_balance.colleague_id WHERE unbooked > 0.8*entitlement AND cc_layer_2 LIKE '%CDAO%';,SELECT full_name FROM holiday_balance JOIN people ON people.resource_id = holiday_balance.colleague_id WHERE unbooked > 0.8 * entitlement AND cc_layer_2 LIKE '%CDAO%';,"[{'full_name': 'Monica Smith'}, {'full_name': 'Jessica Ward'}, {'full_name': 'Meghan Smith'}, {'full_name': 'Roberto Grant'}, {'full_name': 'Jennifer Strong'}, {'full_name': 'Peter Torres'}, {'full_name': 'Kenneth Lewis'}, {'full_name': 'Rebecca Riddle'}, {'full_name': 'Danielle Cummings'}, {'full_name': 'Cassandra Anderson'}, {'full_name': 'Edgar Simmons'}, {'full_name': 'William Holt'}, {'full_name': 'Annette Robinson'}, {'full_name': 'Thomas Henry'}, {'full_name': 'Susan Walton'}, {'full_name': 'Andrew Zimmerman'}, {'full_name': 'Donna Valencia'}, {'full_name': 'Kyle Anthony'}, {'full_name': 'David Hunter'}, {'full_name': 'Lee Bruce'}, {'full_name': 'Walter Robinson'}, {'full_name': 'Scott Gomez'}, {'full_name': 'Ashley Pierce'}, {'full_name': 'Craig Barnes'}, {'full_name': 'Bethany Gould'}, {'full_name': 'Sara Alvarado'}, {'full_name': 'Andrew Eaton'}]",,,,,,,
+44,,DAAI - Rita,"people, Holiday_balance",What colleagues in CDAO (cc_layer_2) have more than 80% of holiday entitlement left to book? Give their name,SELECT full_name FROM holiday_balance JOIN people ON people.resource_id = holiday_balance.colleague_id WHERE unbooked > 0.8*entitlement AND cc_layer_2 LIKE '%CDAO%';,SELECT full_name FROM holiday_balance JOIN people ON people.resource_id = holiday_balance.colleague_id WHERE unbooked > 0.8 * entitlement AND cc_layer_2 LIKE '%CDAO%';,"[{'full_name': 'Monica Smith'}, {'full_name': 'Jessica Ward'}, {'full_name': 'Meghan Smith'}, {'full_name': 'Roberto Grant'}, {'full_name': 'Jennifer Strong'}, {'full_name': 'Peter Torres'}, {'full_name': 'Kenneth Lewis'}, {'full_name': 'Rebecca Riddle'}, {'full_name': 'Danielle Cummings'}, {'full_name': 'Cassandra Anderson'}, {'full_name': 'Edgar Simmons'}, {'full_name': 'William Holt'}, {'full_name': 'Annette Robinson'}, {'full_name': 'Thomas Henry'}, {'full_name': 'Susan Walton'}, {'full_name': 'Andrew Zimmerman'}, {'full_name': 'Donna Valencia'}, {'full_name': 'Kyle Anthony'}, {'full_name': 'David Hunter'}, {'full_name': 'Lee Bruce'}, {'full_name': 'Walter Robinson'}, {'full_name': 'Scott Gomez'}, {'full_name': 'Ashley Pierce'}, {'full_name': 'Craig Barnes'}, {'full_name': 'Bethany Gould'}, {'full_name': 'Sara Alvarado'}, {'full_name': 'Andrew Eaton'}]",SELECT p.full_name FROM people AS p JOIN holiday_balance AS hb ON p.resource_id = hb.colleague_id WHERE p.cc_layer_2 ILIKE 'CDAO' AND hb.unbooked > 0.8 * hb.entitlement;,"            full_name
+0        Meghan Smith
+1       Roberto Grant
+2     Jennifer Strong
+3       Kenneth Lewis
+4      Rebecca Riddle
+5   Danielle Cummings
+6    Annette Robinson
+7    Andrew Zimmerman
+8        David Hunter
+9           Lee Bruce
+10        Scott Gomez
+11      Ashley Pierce
+12       Craig Barnes","Assumptions:
+  - Assuming 'holidays left unbooked' refers to the ""Unbooked_ex_nuw"" field in the holiday_balance table, which represents the remaining holiday hours available for booking excluding hours not booked in the Workday system.
+  - Assuming that 80% of holidays left unbooked refers to 80% or more.
+
+Ambiguities:
+  - The term 'colleagues' is ambiguous and could refer to all employees or a specific subset (e.g., permanent employees, contractors).
+
+Edge Cases:
+  - The 'holiday_balance' table has data only for a single 'report_date'. The query will only consider the holiday balance as of this date.
+  - Some colleagues might have a zero entitlement of holidays. Dividing by zero will result in an error.","Filtered Choices:
+- [""Clarify if 'holidays left unbooked' should include hours not booked in Workday ('unbooked' field) or only those booked within Workday ('Unbooked_ex_nuw').""] - unbooked
+- Assuming that 80% of holidays left unbooked refers to 80% or more.: just use >
+- [""Please clarify who you mean by 'colleagues'. Should the query consider all worker types or a specific category (e.g., only permanent employees)?""] - all",SELECT p.full_name FROM people AS p JOIN holiday_balance AS hb ON p.resource_id = hb.colleague_id WHERE p.cc_layer_2 LIKE '%CDAO%' AND hb.unbooked >= 0.8 * hb.entitlement;,"{'data': [{'full_name': 'Monica Smith'}, {'full_name': 'Jessica Ward'}, {'full_name': 'Meghan Smith'}, {'full_name': 'Roberto Grant'}, {'full_name': 'Jennifer Strong'}, {'full_name': 'Peter Torres'}, {'full_name': 'Kenneth Lewis'}, {'full_name': 'Rebecca Riddle'}, {'full_name': 'Danielle Cummings'}, {'full_name': 'Cassandra Anderson'}, {'full_name': 'Edgar Simmons'}, {'full_name': 'William Holt'}, {'full_name': 'Annette Robinson'}, {'full_name': 'Thomas Henry'}, {'full_name': 'Susan Walton'}, {'full_name': 'Andrew Zimmerman'}, {'full_name': 'Donna Valencia'}, {'full_name': 'Tammy Trujillo'}, {'full_name': 'Rita Spencer'}, {'full_name': 'Diane Thomas'}, {'full_name': 'Angela Jimenez'}, {'full_name': 'Alexandria Grant'}, {'full_name': 'Jason Dougherty'}, {'full_name': 'Kyle Anthony'}, {'full_name': 'Austin Moore'}, {'full_name': 'Rachel Guzman'}, {'full_name': 'Deborah Mason'}, {'full_name': 'Dalton Miller'}, {'full_name': 'Kari Davis'}, {'full_name': 'David Hunter'}, {'full_name': 'Jacqueline Collins'}, {'full_name': 'Bryan Benton'}, {'full_name': 'Miranda Holloway'}, {'full_name': 'Elizabeth Mejia'}, {'full_name': 'Robert Brooks'}, {'full_name': 'Frank Clark'}, {'full_name': 'Wesley Fernandez'}, {'full_name': 'Kathryn Green'}, {'full_name': 'Lee Bruce'}, {'full_name': 'Kelly Zhang'}, {'full_name': 'Stefanie Davis'}, {'full_name': 'Maurice Mcclure'}, {'full_name': 'Kelly Reed'}, {'full_name': 'Randy Pope'}, {'full_name': 'Walter Robinson'}, {'full_name': 'Scott Gomez'}, {'full_name': 'Morgan Bruce'}, {'full_name': 'Kristina Cooper'}, {'full_name': 'Ashley Pierce'}, {'full_name': 'Craig Barnes'}, {'full_name': 'Bethany Gould'}, {'full_name': 'Sara Alvarado'}, {'full_name': 'Andrew Eaton'}]}",
+ 
