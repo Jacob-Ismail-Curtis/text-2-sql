@@ -1,3 +1,5 @@
+import re
+
 schema = r"""CREATE TABLE "people" (
   "resource_id" TEXT PRIMARY KEY, --- Colleague's GID, the unique number assigned to each colleague. **No NULL values observed**. 
   "full_name" TEXT, --- Colleague's first and last names
@@ -86,7 +88,6 @@ schema = r"""CREATE TABLE "people" (
   "wd_file_date" TEXT, --- Workday file date of report extraction
   "run_date" TEXT --- The date on which the report was generated
   );
-
   CREATE TABLE "holiday_balance" (
   "colleague_id" TEXT PRIMARY KEY,  --- Colleague's unique identifier. Each ID represents a snapshot of their holiday balance on the report date. Note: Multiple entries for the same colleague ID on a single report date indicate potential data duplication and require further investigation.
   "report_date" DATE,  --- The date when the holiday balance snapshot was taken. This field is crucial for time-series analysis. Note: Currently, there is only one distinct report date ('2024-07-22') in the dataset, indicating a potential limitation for historical analysis.
@@ -103,10 +104,38 @@ schema = r"""CREATE TABLE "people" (
   "Unbooked_ex_nuw" REAL  --- Represents the remaining holiday hours available for booking, excluding any hours not booked in the Workday system ("hours_not_using_workday"). This field offers a more conservative estimate of available holiday hours by considering only those booked within the Workday system, providing a more accurate reflection of manageable holiday balances. 
   );
   CREATE TABLE "holiday_details" (
-  "colleague_id" TEXT NOT NULL,  -- Colleague's unique identifier. This is a foreign key that should link to the 'colleague' table. This ID is consistent across related tables and is crucial for linking holiday data to specific colleagues. No null values are allowed in this column.
-  "hours" REAL,  -- Total holiday hours booked by the colleague. Values can be positive or negative. Negative values indicate a cancellation of the holiday. 
-  "date" TEXT,  -- The date for which holiday hours were booked (YYYY-MM-DD). The data in this column ranges from 2024-01-01 to 2024-12-31.
-  "entered_on" TEXT,  -- The date when the holiday was recorded in the system (YYYY-MM-DD). It's crucial to ensure this date is not later than the holiday 'date'. Data entry errors have been observed where this date is later than the holiday date.
-  "report_date" TEXT,  -- snapshot date of the data (YYYY-MM-DD). Currently, the table contains data only for 2024-07-22
-  "taken_tf" INTEGER  -- A binary flag (0 or 1) indicating if the holiday hours were actually taken. This field often differs from 'hours', suggesting a significant discrepancy between booked and actual holiday taken (221087 instances). It's unclear if 'hours' represents the intended duration while 'taken_tf' reflects the actual time off. 
+  "colleague_id" TEXT NOT NULL,  --- Colleague's unique identifier. This is a foreign key that should link to the 'colleague' table. This ID is consistent across related tables and is crucial for linking holiday data to specific colleagues. No null values are allowed in this column.
+  "hours" REAL,  --- Total holiday hours booked by the colleague. Values can be positive or negative. Negative values indicate a cancellation of the holiday. 
+  "date" TEXT,  --- The date for which holiday hours were booked (YYYY-MM-DD). The data in this column ranges from 2024-01-01 to 2024-12-31.
+  "entered_on" TEXT, --- The date when the holiday was recorded in the system (YYYY-MM-DD). It's crucial to ensure this date is not later than the holiday 'date'. Data entry errors have been observed where this date is later than the holiday date.
+  "report_date" TEXT,  --- snapshot date of the data (YYYY-MM-DD). Currently, the table contains data only for 2024-07-22
+  "taken_tf" INTEGER  --- A binary flag (0 or 1) indicating if the holiday hours were actually taken. This field often differs from 'hours', suggesting a significant discrepancy between booked and actual holiday taken (221087 instances). It's unclear if 'hours' represents the intended duration while 'taken_tf' reflects the actual time off. 
   );"""
+
+# Regular expression patterns to extract tables, columns, and descriptions
+table_pattern = r'CREATE TABLE "(\w+)" \((.*?)\);'
+column_pattern = r'"(\w+)" \w+.*?--- (.*?)$'
+
+# Dictionary to store table schemas
+schema_dict = {}
+
+# Find each table and its columns
+tables = re.findall(table_pattern, schema, re.DOTALL)
+for table, columns in tables:
+    # Dictionary to store column descriptions
+    column_descriptions = {}
+    
+    # Find each column and its description
+    for column, description in re.findall(column_pattern, columns, re.MULTILINE):
+        column_descriptions[column] = description.strip()
+    
+    # Store in main dictionary under the table name
+    schema_dict[table] = column_descriptions
+
+# Example output of dictionary contents
+# for table, columns in schema_dict.items():
+#     print(f"Table: {table}")
+#     for column, description in columns.items():
+#         print(f'  "{column}": "{description}"')
+#     print()
+print(schema_dict)
