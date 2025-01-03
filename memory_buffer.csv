@@ -1,0 +1,26 @@
+User Query,Relevant Tables,Relevant Columns,Generated SQL Query,Execution Results
+How many people have booked at least 50 hours before 01/05/2024?,"[""holiday_balance""]","[""holiday_balance.booked""]","SELECT
+COUNT(DISTINCT colleague_id)
+FROM holiday_balance
+WHERE booked >= 50
+AND report_date < '2024-05-01'",[[0]]
+how many of these are managers,"[""people""]","[""people.is_manager""]",SELECT COUNT(*) FROM people WHERE is_manager = 'yes',[[0]]
+How many people have booked at least 50 hours before 01/05/2024?,"[""holiday_balance""]","[""holiday_balance.booked""]","SELECT
+COUNT(DISTINCT colleague_id)
+FROM holiday_balance
+WHERE booked >= 50
+AND report_date <= '2024-04-30'",[[0]]
+how manny of these are managers,"[""people""]","[""people.is_manager""]",SELECT COUNT(*) FROM people WHERE is_manager = 'yes' AND direct_line_manager_id IS NOT NULL AND location_name = 'Manchester' AND data_source = 'Workday',[[0]]
+How many people have booked at least 50 hours before 01/05/2024?,"[""holiday_balance""]","[""holiday_balance.booked""]","SELECT
+COUNT(DISTINCT colleague_id)
+FROM holiday_balance
+WHERE booked >= 50
+AND report_date < '2024-05-01'
+AND using_workday = 1",[[0]]
+How many people have booked at least 50 hours before 01/05/2024?,"[""holiday_balance""]","[""holiday_balance.report_date"", ""holiday_balance.booked""]","SELECT
+COUNT(DISTINCT colleague_id)
+FROM holiday_balance
+WHERE booked >= 50
+AND NOT (coalesce(using_workday, 0) = 0)
+AND report_date < '2024-05-01'",[[0]]
+how many of these are managers,"[""people""]","[""people.is_manager""]",SELECT COUNT(*) FROM people WHERE is_manager = 'yes' AND location_name = 'Manchester' AND data_source = 'Workday' AND worker_type = 'Manager' AND fte >= 1.0,[[0]]
