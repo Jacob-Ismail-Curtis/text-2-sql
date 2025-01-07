@@ -1,32 +1,17 @@
+import pandas as pd
 import numpy as np
 
+# Define the soft_f1_score function
 def soft_f1_score(ground_truth, prediction, tolerance=0.8):
-    """
-    Calculate and print the Soft F1 score between two SQL result tables.
-    
-    Args:
-        ground_truth (list of lists): The ground truth table rows.
-        prediction (list of lists): The predicted table rows.
-        tolerance (float): A value between 0 and 1 indicating how closely 
-                           rows should match to be considered similar.
-                           
-    Returns:
-        float: The Soft F1 Score.
-    """
     def row_similarity(row1, row2):
-        """
-        Compute similarity between two rows as the average similarity of elements.
-        """
         matches = sum(1 for a, b in zip(row1, row2) if str(a).strip().lower() == str(b).strip().lower())
         return matches / max(len(row1), len(row2))
 
-    # Create similarity matrix
     similarity_matrix = np.zeros((len(ground_truth), len(prediction)))
     for i, gt_row in enumerate(ground_truth):
         for j, pred_row in enumerate(prediction):
             similarity_matrix[i, j] = row_similarity(gt_row, pred_row)
 
-    # Compute precision, recall, and F1
     precision = np.sum(np.max(similarity_matrix, axis=0)) / len(prediction) if prediction else 0
     recall = np.sum(np.max(similarity_matrix, axis=1)) / len(ground_truth) if ground_truth else 0
     if precision + recall == 0:
@@ -34,5 +19,28 @@ def soft_f1_score(ground_truth, prediction, tolerance=0.8):
     else:
         f1 = 2 * (precision * recall) / (precision + recall)
 
-    print(f"Soft F1 Score: {f1:.4f}")
-    return f1
+    return f1, recall
+
+# Load the CSV file
+eval_file = "C:/Users/5609580/Downloads/3.3 - 3.2 Eval .xlsx"
+df = pd.read_excel(eval_file, engine='openpyxl')
+
+# Calculate Soft F1 and Recall for each row
+soft_f1_scores = []
+recalls = []
+
+for index, row in df.iterrows():
+    ground_truth = [str(row['GOLD RESULT']).split()]
+    prediction = [str(row['3.2 RESULT']).split()]
+    f1, recall = soft_f1_score(ground_truth, prediction)
+    soft_f1_scores.append(f1)
+    recalls.append(recall)
+
+# Add the results to the DataFrame
+df['SOFT F1'] = soft_f1_scores
+df['RECALL'] = recalls
+
+# Save the updated DataFrame back to an Excel file
+df.to_excel("C:/Users/5609580/Downloads/3.3 - 3.2 Eval Updated.xlsx", index=False)
+
+print("Soft F1 scores and recalls have been calculated and saved to the updated Excel file.")
